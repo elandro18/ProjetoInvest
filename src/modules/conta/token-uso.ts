@@ -22,6 +22,12 @@ export function classificarTokenDeUso(
     return errors.authTokenInvalido();
   }
 
+  // Conta suspensa não pode ser reativada por verificação de e-mail nem
+  // redefinir a própria senha enquanto a suspensão estiver vigente.
+  if (registro.statusConta === "SUSPENSA") {
+    return errors.authContaSuspensa();
+  }
+
   if (registro.usadoEm !== null) {
     return errors.authTokenJaUsado();
   }

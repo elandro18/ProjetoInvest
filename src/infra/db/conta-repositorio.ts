@@ -1,5 +1,6 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
+import { errors } from "../../lib/errors";
 import {
   EmailJaCadastradoError,
   type AtivacaoConta,
@@ -124,9 +125,18 @@ export class ContaPrismaRepositorio implements ContaRepositorio {
         return null;
       }
 
-      const usuario = await tx.usuario.update({
-        where: { id: ativacao.usuarioId },
+      const ativado = await tx.usuario.updateMany({
+        where: { id: ativacao.usuarioId, statusConta: "PENDENTE_VERIFICACAO" },
         data: { statusConta: "ATIVA", emailVerificadoEm: ativacao.agora },
+      });
+
+      if (ativado.count === 0) {
+        // Suspensão/exclusão concorrente: desfaz o consumo do token.
+        throw errors.authTokenInvalido();
+      }
+
+      const usuario = await tx.usuario.findUniqueOrThrow({
+        where: { id: ativacao.usuarioId },
         select: { emailVerificadoEm: true },
       });
 

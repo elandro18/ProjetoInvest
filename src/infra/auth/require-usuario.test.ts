@@ -31,6 +31,15 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+/**
+ * Isolamento da sessão (RN-085, AC-067).
+ *
+ * `requireUsuario()` é a única porta que traduz a sessão em `usuarioId`; o
+ * usuário nunca vem do corpo da requisição. O IDOR sobre recursos de negócio
+ * (ativo/movimentação) não é exercitado aqui porque ainda não existe recurso
+ * de negócio nesta fase: a posse por `usuarioId` será testada na RN-010,
+ * quando o primeiro recurso (`ativo`) existir.
+ */
 describe("requireUsuario", () => {
   it("devolve usuário e nome/e-mail da conta ativa com versão compatível", async () => {
     auth.mockResolvedValue(sessao());
@@ -42,6 +51,18 @@ describe("requireUsuario", () => {
       email: CONTA.email,
     });
     expect(buscarSessao).toHaveBeenCalledWith(CONTA.id);
+  });
+
+  it("devolve apenas o necessário — sem status, versão ou hash", async () => {
+    auth.mockResolvedValue(sessao());
+    buscarSessao.mockResolvedValue(CONTA);
+
+    const usuario = await requireUsuario();
+
+    expect(Object.keys(usuario).sort()).toEqual(["email", "nome", "usuarioId"]);
+    expect(usuario).not.toHaveProperty("sessionVersion");
+    expect(usuario).not.toHaveProperty("statusConta");
+    expect(usuario).not.toHaveProperty("senhaHash");
   });
 
   it("rejeita requisição sem sessão", async () => {
@@ -60,6 +81,8 @@ describe("requireUsuario", () => {
     ["conta inexistente", null],
     ["conta excluída", { ...CONTA, excluidoEm: new Date() }],
     ["conta suspensa", { ...CONTA, statusConta: "SUSPENSA" }],
+    ["conta não verificada", { ...CONTA, statusConta: "PENDENTE_VERIFICACAO" }],
+    ["conta excluída por status", { ...CONTA, statusConta: "EXCLUIDA", excluidoEm: new Date() }],
   ])("rejeita %s", async (_caso, conta) => {
     auth.mockResolvedValue(sessao());
     buscarSessao.mockResolvedValue(conta);
@@ -75,5 +98,12 @@ describe("requireUsuario", () => {
       code: "AUTH_SESSAO_EXPIRADA",
       status: 401,
     });
+  });
+
+  it("rejeita sessão de versão futura (token de outro ambiente)", async () => {
+    auth.mockResolvedValue(sessao({ sessionVersion: 9 }));
+    buscarSessao.mockResolvedValue({ ...CONTA, sessionVersion: 1 });
+
+    await expect(requireUsuario()).rejects.toMatchObject({ code: "AUTH_SESSAO_EXPIRADA" });
   });
 });

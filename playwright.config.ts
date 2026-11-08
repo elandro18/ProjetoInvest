@@ -18,6 +18,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [["list"], ["html", { open: "never" }]],
+  // Conta de teste ativada no banco para o login válido (limpa no teardown).
+  globalSetup: "./e2e/global-setup.ts",
+  globalTeardown: "./e2e/global-teardown.ts",
   use: {
     baseURL,
     trace: "on-first-retry",
@@ -28,5 +31,8 @@ export default defineConfig({
     url: `${baseURL}/api/health`,
     reuseExistingServer: !process.env.CI,
     timeout: 240_000,
+    // A suíte de conta autentica mais de uma vez por execução; o limitador é
+    // coberto em teste unitário e não deve interferir no E2E.
+    env: { RATE_LIMIT_DESABILITADO: "true" },
   },
 });

@@ -157,3 +157,30 @@
 ### Removido
 
 - Nada.
+
+## 08/11/2026 — Conta e autenticação implementadas (RN-085)
+
+### Implementado (código)
+
+- **RN-085-1** — tabelas `usuario`, `token_conta`, `aceite_legal`; índice único `lower(email)`; trigger de `atualizado_em`.
+- **RN-085-2** — cadastro aberto com Argon2id, aceite legal versionado, hash de IP e token de verificação de 24 h.
+- **RN-085-3** — verificação de e-mail e reenvio neutro com rate limit.
+- **RN-085-4** — Auth.js v5 (5.0.0-beta.32), JWT de 8 h, `sessionVersion`, `requireUsuario()` e middleware de proteção.
+- **RN-085-5** — esqueci-senha/redefinir-senha com token de 1 h, uso único e invalidação de sessões.
+- **RN-085-6** — `DELETE /api/conta` com anonimização determinística, remoção de tokens e preservação do aceite legal.
+- **RN-085-7** — telas públicas de login, cadastro, verificação, esqueci-senha e redefinir-senha.
+- **RN-085-8** — shell privado, `/conta` e diálogo de encerramento com confirmação por senha.
+- **RN-085-9** — 397 testes, E2E 8/8, cobertura global 86,56% e domínio 100%.
+
+### Corrigido (segurança)
+
+- Conta `SUSPENSA` podia ser reativada pela verificação de e-mail: `classificarTokenDeUso` passou a bloquear com `AUTH_CONTA_SUSPENSA` (403) e a ativação passou a exigir transição atômica de `PENDENTE_VERIFICACAO` para `ATIVA` na mesma transação do consumo do token.
+
+### Decisões e pendências
+
+- Mailer por port: console em desenvolvimento, SMTP quando `EMAIL_SERVER`/`EMAIL_FROM` existem.
+- Pendências: páginas `/termos` e `/privacidade`; E2E de verificação/reset depende de provedor de e-mail; job E2E do CI sem Postgres (teste de login é auto-skipado); IDOR de recurso de negócio será exercitado na RN-010; aviso do Next 16 sobre `middleware` → `proxy`.
+
+### Removido
+
+- Nada.

@@ -154,4 +154,20 @@ describe("autenticar", () => {
       expect(resultado.error.code).toBe("AUTH_CREDENCIAIS_INVALIDAS");
     }
   });
+
+  it("senha confere mas a conta sumiu entre a consulta e a resposta", async () => {
+    const repositorio = repositorioCom(null);
+    const verificarSenha = vi.fn(async () => true);
+
+    const resultado = await autenticar(
+      { email: "fantasma@exemplo.com", senha: "correta" },
+      { repositorio, verificarSenha },
+    );
+
+    expect(resultado.ok).toBe(false);
+    if (!resultado.ok) {
+      expect(resultado.error.code).toBe("AUTH_CREDENCIAIS_INVALIDAS");
+      expect(resultado.error.status).toBe(401);
+    }
+  });
 });

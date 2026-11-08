@@ -13,6 +13,7 @@ import {
   redefinirSenha,
   solicitarRedefinicaoSenha,
 } from "./reset";
+import { VALIDADE_REDEFINICAO_SENHA_MS } from "./token";
 
 const AGORA = new Date("2026-11-08T12:00:00.000Z");
 
@@ -162,6 +163,28 @@ describe("solicitarRedefinicaoSenha", () => {
     expect(repositorio.substituirTokenRedefinicao).toHaveBeenCalledOnce();
     expect(mailer.enviarRedefinicaoSenha).toHaveBeenCalledOnce();
   });
+
+  it("usa o relógio do sistema quando nenhum for injetado", async () => {
+    const antes = Date.now();
+    const repositorio = repositorioCom({ buscarPorEmail: vi.fn(async () => CONTA) });
+    const mailer = mailerFake();
+
+    const resultado = await solicitarRedefinicaoSenha(
+      { email: CONTA.email },
+      {
+        repositorio,
+        mailer,
+        gerarToken: () => ({ token: "token-puro", hash: "hash-token" }),
+        appUrl: "http://localhost:3000",
+      },
+    );
+
+    expect(resultado.ok).toBe(true);
+    const chamada = vi.mocked(repositorio.substituirTokenRedefinicao).mock.calls[0]?.[0];
+    const expiraEm = chamada?.token.expiraEm.getTime() ?? 0;
+    expect(expiraEm).toBeGreaterThanOrEqual(antes + VALIDADE_REDEFINICAO_SENHA_MS);
+    expect(expiraEm).toBeLessThanOrEqual(Date.now() + VALIDADE_REDEFINICAO_SENHA_MS + 1_000);
+  });
 });
 
 describe("redefinirSenha", () => {
@@ -298,5 +321,26 @@ describe("redefinirSenha", () => {
       expect(resultado.error.code).toBe("AUTH_TOKEN_JA_USADO");
       expect(resultado.error.status).toBe(409);
     }
+  });
+
+  it("usa o relógio do sistema quando nenhum for injetado", async () => {
+    const repositorio = repositorioCom({
+      buscarTokenPorHash: vi.fn(async () =>
+        tokenValido({ expiraEm: new Date(Date.now() + 60 * 60 * 1000) }),
+      ),
+    });
+    const hashSenha = vi.fn(async () => "novo-hash");
+    const hashToken = vi.fn((token: string) => `hash:${token}`);
+
+    const resultado = await redefinirSenha(
+      { token: "token-x", novaSenha: "senha-forte-123" },
+      { repositorio, hashSenha, hashToken },
+    );
+
+    expect(resultado).toEqual({ ok: true, value: { message: MENSAGEM_SENHA_REDEFINIDA } });
+    expect(repositorio.redefinirSenha).toHaveBeenCalledOnce();
+    const chamada = vi.mocked(repositorio.redefinirSenha).mock.calls[0]?.[0];
+    expect(chamada?.agora).toBeInstanceOf(Date);
+    expect(chamada?.agora.getTime()).toBeLessThanOrEqual(Date.now() + 1_000);
   });
 });

@@ -140,4 +140,19 @@ describe("encerrarConta", () => {
       expect(resultado.error.status).toBe(409);
     }
   });
+
+  it("usa o relógio do sistema quando nenhum for injetado", async () => {
+    const antes = Date.now();
+    const repositorio = repositorioCom(CONTA);
+    const verificarSenha = vi.fn(async () => true);
+
+    const resultado = await encerrarConta(
+      { usuarioId: CONTA.id, senha: "senha-correta" },
+      { repositorio, verificarSenha },
+    );
+
+    expect(resultado.ok).toBe(true);
+    const chamada = vi.mocked(repositorio.encerrarConta).mock.calls[0]?.[0];
+    expect(chamada?.agora.getTime()).toBeGreaterThanOrEqual(antes);
+  });
 });
