@@ -48,7 +48,35 @@
   outline-offset: 2px;
 }
 
+/* Tipografia base do layout: uma família, escala herdada do Tailwind. */
+html {
+  height: 100%;
+  color-scheme: light;
+}
+
 body {
-  background: var(--neutral-0);
+  min-height: 100%;
+  background: var(--neutral-50);
   color: var(--neutral-900);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Superfícies e bordas usam apenas tokens semânticos (UI_SPEC §1.1). */
+::selection {
+  background: color-mix(in srgb, var(--focus) 25%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
