@@ -68,6 +68,8 @@ npm run db:seed
 | `npm run lint` | ESLint (inclui a regra de dependência do domínio) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test` | Testes unitários e de integração (Vitest) |
+| `npm run test:watch` | Testes em modo watch |
+| `npm run test:coverage` | Testes com relatório e gates de cobertura |
 | `npm run test:e2e` | Testes E2E (Playwright) |
 | `npm run db:migrate` | Cria e aplica migration de desenvolvimento |
 | `npm run db:seed` | Popula dados de referência |

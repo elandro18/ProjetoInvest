@@ -102,13 +102,15 @@
 
 - Nada.
 
-## 08/11/2026 — Fundação implementada (RN-001-1 a RN-001-3)
+## 08/11/2026 — Fundação implementada (RN-001-1 a RN-001-4 e RN-001-7)
 
 ### Implementado (código, branch `feature/rn-001-fundacao-tecnica`)
 
-- **RN-001-1** — scaffold Next.js 15.5.29 + TypeScript + App Router + Tailwind 4, estrutura de camadas, scripts, `.env.example`, `.gitignore`, regra de dependência do ADR-004 no ESLint, README em PT-BR. `lint`, `typecheck` e `build` verdes.
+- **RN-001-1** — scaffold Next.js (15.5.29 na época, depois 16.4.5) + TypeScript + App Router + Tailwind 4, estrutura de camadas, scripts, `.env.example`, `.gitignore`, regra de dependência do ADR-004 no ESLint, README em PT-BR.
 - **RN-001-2** — Prisma 6.19.3 + `@prisma/client` + `tsx`; migrations `init` (`classe_ativo`, `segmento_ativo`) e `fn_atualizado_em`; seed idempotente com 2 classes e 9 segmentos. Banco local em Docker.
 - **RN-001-3** — `Result`, `AppError` + catálogo, `Decimal`/`Money` (decimal.js), envelope de erro, `withRoute` com `requestId`, validação Zod por campo, logger com mascaramento e `GET /api/health`.
+- **RN-001-7** — tabelas `provedor_dados` e `log_integracao` + seed do provedor CVM.
+- **RN-001-4** — port de provedor, `DadoProveniente`, registry por capacidade/prioridade, http-client com timeout e retry, log de integração sanitizado e stub.
 
 ### Adicionado (documentação)
 
@@ -122,6 +124,35 @@
 
 - A porta 5432 da máquina está ocupada por um PostgreSQL nativo; o container de desenvolvimento publica em **5433** (`docker-compose.dev.yml`, `.env` e README alinhados).
 - `package.json#prisma` está deprecado no Prisma 6.19 — migrar para `prisma.config.ts` antes do Prisma 7.
+
+### Removido
+
+- Nada.
+
+## 08/11/2026 — Fundação: testes, CI e atualização de dependências (RN-001-6)
+
+### Adicionado
+
+- `vitest.config.ts` e `vitest.setup.ts`: projetos `node` e `ui`, gates de cobertura (global 75% linhas; `src/modules/**` 90% linhas / 85% branches).
+- 14 arquivos de teste — **206 testes** cobrindo `Result`, `AppError`, `Decimal`/`Money`, envelope de erro, validação Zod, `withRoute`, logger, registry, http-client, log e stub.
+- `playwright.config.ts` + `e2e/home.spec.ts` e `e2e/health.spec.ts`.
+- `.github/workflows/ci.yml`: job de qualidade (lint, typecheck, cobertura, build, audit) e job de E2E (Chromium).
+- `scripts/audit.mjs` + script `npm run audit`: auditoria com allowlist explícita e rastreável.
+- `DECISIONS.md` ADR-012: aceite temporário da advisory GHSA-ggr8-5vv4-36mx (deepmerge-ts via Prisma 6), com prazo de revisão.
+
+### Alterado
+
+- Dependências: **Next 15.5.29 → 16.4.5**, `eslint-config-next` 16, **Vitest 3.2.7 → 5.1.0**, `@vitest/coverage-v8` 5, `@types/node` 20 → 22. O upgrade eliminou as vulnerabilidades críticas (Vitest) e as altas de `postcss` (Next).
+- `eslint.config.mjs`: migrado de `FlatCompat` para os exports flat do `eslint-config-next` 16, preservando a regra do ADR-004.
+- CI: etapa de auditoria passou a usar `npm run audit` (allowlist documentada) em vez de `npm audit` puro.
+
+### Resultado das verificações
+
+- `npm run test` — 206 testes verdes.
+- Cobertura — 96,59% de linhas global; `src/modules/**` 100% linhas e branches.
+- `npm run test:e2e` — 2 testes verdes em Chromium.
+- `npm run lint`, `npm run typecheck`, `npm run build` — verdes.
+- `npm run audit` — 1 aceite explícito (ADR-012), 0 bloqueios.
 
 ### Removido
 

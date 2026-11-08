@@ -161,3 +161,21 @@ Regra de dependência: domínio não importa Prisma, `next/*` nem SDK de provedo
 - Negativas: necessidade de e-mail transacional, rate limiting, proteção antiabuso (CAPTCHA condicional) e rotina de anonimização.
 - Riscos: abuso de criação de contas e enumeração de e-mails — mitigados por rate limit, respostas neutras e verificação obrigatória.
 - Impacto: `RN-085` a `RN-088`; tabelas `token_conta` e `aceite_legal`; fluxo de autenticação em `SECURITY.md` e `UI_SPEC.md`.
+
+---
+
+## ADR-012: Aceite temporário da advisory GHSA-ggr8-5vv4-36mx (deepmerge-ts via Prisma 6)
+
+**Status:** Aceito (temporário, com prazo de revisão)
+**Data:** 08/11/2026
+**Decisor:** Proprietário do produto (gate de CI) + RDD Docente
+**Contexto:** `@prisma/client@6` declara `prisma` como dependência de runtime, que traz `@prisma/config` → `deepmerge-ts < 8.0.0`, afetado por exaustão de pilha ao mesclar grafos recursivos (GHSA-ggr8-5vv4-36mx). A correção existe apenas no Prisma 7, que é uma mudança de major (novo gerador de client, driver adapters e `prisma.config.ts`). O código afetado é o carregador de configuração da CLI, não o caminho de consulta usado pela aplicação.
+**Decisão:**
+1. Manter Prisma 6 na Fase 1.
+2. Allowlistar **apenas** essa advisory em `scripts/audit.mjs`, com motivo e prazo de revisão (`2027-02-01`).
+3. O gate de CI (`npm run audit`) continua bloqueando qualquer outra vulnerabilidade `high` ou `critical`.
+4. Planejar a migração para Prisma 7 como task própria antes do prazo de revisão.
+**Consequências:**
+- Positivas: CI honesto e verde sem esconder o risco; allowlist auditável em código, não em configuração opaca.
+- Negativas: dívida técnica explícita; o upgrade do Prisma exigirá ajuste de gerador, imports e testes.
+- Revisão: ao migrar para Prisma 7, remover a entrada da allowlist e esta ADR passa a `superseded`.
