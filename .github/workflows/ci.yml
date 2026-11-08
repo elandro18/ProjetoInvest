@@ -26,6 +26,9 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Gerar Prisma Client
+        run: npx prisma generate
+
       - name: Lint
         run: npm run lint
 
@@ -44,6 +47,26 @@ jobs:
   e2e:
     name: E2E (Chromium)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: invest
+          POSTGRES_PASSWORD: invest
+          POSTGRES_DB: investcontrol
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U invest -d investcontrol"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://invest:invest@localhost:5432/investcontrol?schema=public
+      DIRECT_URL: postgresql://invest:invest@localhost:5432/investcontrol?schema=public
+      AUTH_SECRET: ci-e2e-secret-with-at-least-32-bytes-0000
+      AUTH_URL: http://localhost:3100
+      RATE_LIMIT_DESABILITADO: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,6 +79,11 @@ jobs:
 
       - name: Instalar dependências
         run: npm ci
+
+      - name: Gerar Prisma Client e aplicar migrations
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
 
       - name: Instalar Chromium (Playwright)
         run: npx playwright install --with-deps chromium
