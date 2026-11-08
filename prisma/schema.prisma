@@ -1,0 +1,96 @@
+// Schema Prisma — Investment Control
+// Convenções: snake_case nas tabelas/colunas (specs/DATA_MODEL.md §2), UUID como PK,
+// dinheiro em Decimal (ADR-006). Apenas dados de referência nesta primeira migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// Como o provedor de dados se autentica nas chamadas externas (RN-030).
+enum AutenticacaoProvedor {
+  NENHUMA
+  API_KEY
+  OAUTH
+
+  @@map("autenticacao_provedor")
+}
+
+/// Resultado de uma chamada a provedor externo (RN-074).
+enum StatusIntegracao {
+  SUCESSO
+  ERRO
+  TIMEOUT
+  LIMITE
+  DADOS_INCOMPLETOS
+
+  @@map("status_integracao")
+}
+
+/// Catálogo de classes de ativo (RENDA_FIXA, FII). Dado de referência, não do usuário.
+model ClasseAtivo {
+  id        String          @id @default(uuid()) @db.Uuid
+  codigo    String          @unique @db.VarChar(30)
+  nome      String          @db.VarChar(60)
+  ativo     Boolean         @default(true)
+  ordem     Int             @default(0) @db.SmallInt
+  segmentos SegmentoAtivo[]
+
+  @@map("classe_ativo")
+}
+
+/// Subdivisão de uma classe (hoje, dos FIIs).
+model SegmentoAtivo {
+  id       String      @id @default(uuid()) @db.Uuid
+  classeId String      @map("classe_id") @db.Uuid
+  codigo   String      @db.VarChar(40)
+  nome     String      @db.VarChar(80)
+  ativo    Boolean     @default(true)
+  ordem    Int         @default(0) @db.SmallInt
+  classe   ClasseAtivo @relation(fields: [classeId], references: [id], onDelete: Restrict)
+
+  @@unique([classeId, codigo])
+  @@index([classeId])
+  @@map("segmento_ativo")
+}
+
+/// Cadastro de provedores externos com capacidades e prioridade de resolução (RN-030).
+model ProvedorDados {
+  id                String               @id @default(uuid()) @db.Uuid
+  nome              String               @unique @db.VarChar(60)
+  capacidades       Json
+  autenticacao      AutenticacaoProvedor @default(NENHUMA)
+  limiteRequisicoes String?              @map("limite_requisicoes") @db.VarChar(60)
+  custo             String?              @db.VarChar(160)
+  prioridade        Int                  @default(100) @db.SmallInt
+  ativo             Boolean              @default(true)
+  atualizadoEm      DateTime             @default(now()) @map("atualizado_em") @db.Timestamptz(6)
+  logs              LogIntegracao[]
+
+  @@map("provedor_dados")
+}
+
+/// Auditoria de cada chamada a provedor externo (RN-074).
+model LogIntegracao {
+  id             String           @id @default(uuid()) @db.Uuid
+  provedorId     String           @map("provedor_id") @db.Uuid
+  operacao       String           @db.VarChar(60)
+  recurso        String?          @db.VarChar(120)
+  status         StatusIntegracao
+  httpStatus     Int?             @map("http_status") @db.SmallInt
+  duracaoMs      Int?             @map("duracao_ms")
+  dataConsulta   DateTime         @map("data_consulta") @db.Timestamptz(6)
+  dataReferencia DateTime?        @map("data_referencia") @db.Date
+  mensagem       String?          @db.VarChar(1000)
+  criadoEm       DateTime         @default(now()) @map("criado_em") @db.Timestamptz(6)
+  provedor       ProvedorDados    @relation(fields: [provedorId], references: [id], onDelete: Restrict)
+
+  @@index([provedorId, criadoEm(sort: Desc)], map: "ix_log_provedor_criado")
+  @@index([status, criadoEm(sort: Desc)], map: "ix_log_status_criado")
+  @@map("log_integracao")
+}

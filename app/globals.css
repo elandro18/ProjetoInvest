@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/*
+ * Tokens semânticos do design system — fonte: specs/UI_SPEC.md §1.1.
+ * Nenhuma cor de marca/decorativa é definida aqui: componentes usam apenas
+ * estes tokens para que significado (ganho/perda/alerta) seja consistente.
+ */
+:root {
+  --positive: #157f3d;
+  --negative: #b3261e;
+  --warning: #8a6100;
+  --info: #1d4ed8;
+
+  --neutral-0: #ffffff;
+  --neutral-50: #f7f7f8;
+  --neutral-100: #eceef1;
+  --neutral-200: #d8dce2;
+  --neutral-500: #6b7280;
+  --neutral-700: #374151;
+  --neutral-900: #111827;
+
+  --focus: #1d4ed8;
+}
+
+@theme inline {
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
+  --color-neutral-0: var(--neutral-0);
+  --color-neutral-50: var(--neutral-50);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-900: var(--neutral-900);
+
+  --color-focus: var(--focus);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Anel de foco nunca removido (UI_SPEC §1, princípio 6). */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+body {
+  background: var(--neutral-0);
+  color: var(--neutral-900);
+}

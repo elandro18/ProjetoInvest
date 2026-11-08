@@ -31,6 +31,7 @@ status: draft
 | RN-001-4 | Backend | ProjetoInvest | Implementar camada de provedores, registry e log de integração |
 | RN-001-5 | DevOps | ProjetoInvest | Configurar deploy na Vercel, healthcheck e observabilidade |
 | RN-001-6 | Backend | ProjetoInvest | Implementar testes de fundação e gates de qualidade |
+| RN-001-7 | Database | ProjetoInvest | Criar tabelas `provedor_dados` e `log_integracao` + seed da CVM |
 
 ## Ordem de Execução
 
@@ -40,13 +41,16 @@ RN-001-1 → RN-001-2
 **Wave 2 — Núcleo transversal:**
 RN-001-3
 
-**Wave 3 — Integrações:**
+**Wave 3 — Banco de integrações:**
+RN-001-7
+
+**Wave 4 — Integrações:**
 RN-001-4
 
-**Wave 4 — Deploy:**
+**Wave 5 — Deploy:**
 RN-001-5
 
-**Wave 5 — Qualidade:**
+**Wave 6 — Qualidade:**
 RN-001-6
 
 ---
@@ -279,3 +283,72 @@ Configurar Vitest, Testing Library e Playwright; criar os primeiros testes do n�
 **Notas técnicas:**
 - Meta de cobertura e casos de ouro estão em `quality/TEST_STRATEGY.md`.
 - Usar banco Postgres local no CI, não branch do Neon.
+
+---
+
+### RN-001-7. Criar tabelas de provedor e log de integração
+
+| Campo | Valor |
+|---|---|
+| **Título** | `[Database] RN-001-7 — Criar tabelas provedor_dados e log_integracao` |
+| **Activity** | Development |
+| **RNs** | RN-030, RN-034, RN-074 |
+
+**Descrição:**
+Criar as tabelas que sustentam a camada de provedores da RN-001-4: cadastro de provedores com capacidades, autenticação, limite, custo e prioridade; e o log de integração com status tipado. Incluir seed do provedor CVM.
+
+**Tabelas de referência:**
+
+| Tabela | Coluna alvo | Uso |
+|---|---|---|
+| `provedor_dados` | `nome`, `capacidades`, `autenticacao`, `limite_requisicoes`, `custo`, `prioridade`, `ativo` | Resolução de provedor por capacidade |
+| `log_integracao` | `provedor_id`, `operacao`, `recurso`, `status`, `duracao_ms`, `data_consulta`, `data_referencia` | Auditoria de chamada externa |
+
+```sql
+CREATE TYPE autenticacao_provedor AS ENUM ('NENHUMA','API_KEY','OAUTH');
+CREATE TYPE status_integracao AS ENUM ('SUCESSO','ERRO','TIMEOUT','LIMITE','DADOS_INCOMPLETOS');
+
+CREATE TABLE provedor_dados (
+  id uuid PRIMARY KEY,
+  nome varchar(60) NOT NULL UNIQUE,
+  capacidades jsonb NOT NULL,
+  autenticacao autenticacao_provedor NOT NULL DEFAULT 'NENHUMA',
+  limite_requisicoes varchar(60),
+  custo varchar(160),
+  prioridade smallint NOT NULL DEFAULT 100,
+  ativo boolean NOT NULL DEFAULT true,
+  atualizado_em timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE log_integracao (
+  id uuid PRIMARY KEY,
+  provedor_id uuid NOT NULL REFERENCES provedor_dados(id) ON DELETE RESTRICT,
+  operacao varchar(60) NOT NULL,
+  recurso varchar(120),
+  status status_integracao NOT NULL,
+  http_status smallint,
+  duracao_ms integer CHECK (duracao_ms IS NULL OR duracao_ms >= 0),
+  data_consulta timestamptz NOT NULL,
+  data_referencia date,
+  mensagem varchar(1000),
+  criado_em timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX ix_log_provedor_criado ON log_integracao (provedor_id, criado_em DESC);
+CREATE INDEX ix_log_status_criado ON log_integracao (status, criado_em DESC);
+```
+
+**Validações / Erros:**
+- `INT_PROVEDOR_NAO_ENCONTRADO`: FK de `log_integracao` com provedor inexistente → 404 na API de configuração.
+- `INT_OPERACAO_NAO_SUPORTADA`: capacidade ausente no `jsonb` → 422.
+
+**Critério de Aceitação:**
+- Dado o seed, Quando consulto provedores, Então existe `cvm` com capacidades de informes/cadastro/composição.
+- Dado dois provedores com o mesmo `nome`, Quando insiro, Então a unicidade falha.
+- Dado um log com status fora do enum, Quando insiro, Então o tipo rejeita.
+
+**Dependências:** RN-001-2
+
+**Notas técnicas:**
+- `capacidades` é `jsonb` com lista de strings; a validação do conteúdo é do domínio.
+- `mensagem` nunca recebe token, chave ou payload financeiro completo.
+- Retenção do log segue `PEND-014`.

@@ -101,3 +101,28 @@
 ### Removido
 
 - Nada.
+
+## 08/11/2026 — Fundação implementada (RN-001-1 a RN-001-3)
+
+### Implementado (código, branch `feature/rn-001-fundacao-tecnica`)
+
+- **RN-001-1** — scaffold Next.js 15.5.29 + TypeScript + App Router + Tailwind 4, estrutura de camadas, scripts, `.env.example`, `.gitignore`, regra de dependência do ADR-004 no ESLint, README em PT-BR. `lint`, `typecheck` e `build` verdes.
+- **RN-001-2** — Prisma 6.19.3 + `@prisma/client` + `tsx`; migrations `init` (`classe_ativo`, `segmento_ativo`) e `fn_atualizado_em`; seed idempotente com 2 classes e 9 segmentos. Banco local em Docker.
+- **RN-001-3** — `Result`, `AppError` + catálogo, `Decimal`/`Money` (decimal.js), envelope de erro, `withRoute` com `requestId`, validação Zod por campo, logger com mascaramento e `GET /api/health`.
+
+### Adicionado (documentação)
+
+- `delivery/fase-1/RN-001 — Fundação técnica — Feature.md`: task **RN-001-7** `[Database] Criar tabelas provedor_dados e log_integracao` — separação de banco e código exigida pela regra de escopo único; ondas de execução ajustadas (RN-001-7 antes da RN-001-4).
+
+### Alterado (documentação)
+
+- `specs/ARCHITECTURE.md` §3: regra de dependência refinada — `app/api/**` (Route Handlers) pode importar `src/infra/http/**` e o composition root; páginas e componentes continuam proibidos de importar `src/infra/**`. Correção motivada por divergência reportada na implementação da RN-001-3.
+
+### Observações operacionais
+
+- A porta 5432 da máquina está ocupada por um PostgreSQL nativo; o container de desenvolvimento publica em **5433** (`docker-compose.dev.yml`, `.env` e README alinhados).
+- `package.json#prisma` está deprecado no Prisma 6.19 — migrar para `prisma.config.ts` antes do Prisma 7.
+
+### Removido
+
+- Nada.

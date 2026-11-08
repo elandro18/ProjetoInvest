@@ -63,7 +63,7 @@ Regras:
 
 - O navegador **nunca** fala com CVM ou provedor de mercado.
 - Toda chamada externa passa por `src/infra/providers/**`.
-- Nenhum componente React importa `src/infra/**` diretamente.
+- Nenhum componente React importa `src/infra/**` diretamente; apenas Route Handlers usam `src/infra/http/**` e o container.
 
 ---
 
@@ -81,10 +81,13 @@ flowchart LR
 
 | Camada | Pode importar | Proibido importar |
 |---|---|---|
-| `app/`, `components/` | `src/modules/**` (casos de uso e tipos), `src/lib/**` | `src/infra/**`, `@prisma/client` |
+| `app/**` (páginas e componentes) | `src/modules/**`, `src/lib/**` | `src/infra/**`, `@prisma/client` |
+| `app/api/**` (Route Handlers) | `src/infra/http/**`, `src/infra/container`, `src/modules/**`, `src/lib/**` | `src/infra/providers/**` direto (usar via módulo), `@prisma/client` direto |
 | `src/modules/**` | `src/lib/**`, tipos de `src/modules/**` | `next/*`, `@prisma/client`, SDK de provedor |
 | `src/infra/**` | `@prisma/client`, SDKs, `src/modules/**` (tipos e ports) | `next/*` de UI, `components/**` |
 | `src/lib/**` | bibliotecas puras (decimal, date) | qualquer camada acima |
+
+> A borda HTTP (`app/api/**`) é a única parte de `app/` que pode falar com `src/infra/http/**` e com o composition root. Páginas e componentes continuam proibidos de importar `src/infra/**`.
 
 **Ports** (interfaces) vivem no módulo de domínio e são implementados na infraestrutura — inversão de dependência explícita (ADR-004).
 
