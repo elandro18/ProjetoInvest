@@ -32,6 +32,32 @@ enum StatusIntegracao {
   @@map("status_integracao")
 }
 
+/// Estado do ciclo de vida da conta (RN-085, DATA_MODEL.md §3).
+enum StatusConta {
+  PENDENTE_VERIFICACAO
+  ATIVA
+  SUSPENSA
+  EXCLUIDA
+
+  @@map("status_conta")
+}
+
+/// Finalidade do token de conta (RN-085, RN-086).
+enum TipoTokenConta {
+  VERIFICACAO_EMAIL
+  REDEFINICAO_SENHA
+
+  @@map("tipo_token_conta")
+}
+
+/// Documento legal versionado aceito no cadastro (RN-087).
+enum TipoAceiteLegal {
+  TERMOS_USO
+  POLITICA_PRIVACIDADE
+
+  @@map("tipo_aceite_legal")
+}
+
 /// Catálogo de classes de ativo (RENDA_FIXA, FII). Dado de referência, não do usuário.
 model ClasseAtivo {
   id        String          @id @default(uuid()) @db.Uuid
@@ -93,4 +119,54 @@ model LogIntegracao {
   @@index([provedorId, criadoEm(sort: Desc)], map: "ix_log_provedor_criado")
   @@index([status, criadoEm(sort: Desc)], map: "ix_log_status_criado")
   @@map("log_integracao")
+}
+
+/// Titular da conta (RN-070, RN-071, RN-085). E-mail sempre normalizado em
+/// minúsculas; a unicidade case-insensitive é garantida pelo índice funcional
+/// `ux_usuario_email (lower(email))` criado na migration (Prisma não o expressa).
+model Usuario {
+  id                String        @id @default(uuid()) @db.Uuid
+  nome              String        @db.VarChar(120)
+  email             String        @db.VarChar(160)
+  senhaHash         String        @map("senha_hash")
+  statusConta       StatusConta   @default(PENDENTE_VERIFICACAO) @map("status_conta")
+  emailVerificadoEm DateTime?     @map("email_verificado_em") @db.Timestamptz(6)
+  ultimoLoginEm     DateTime?     @map("ultimo_login_em") @db.Timestamptz(6)
+  criadoEm          DateTime      @default(now()) @map("criado_em") @db.Timestamptz(6)
+  atualizadoEm      DateTime      @default(now()) @map("atualizado_em") @db.Timestamptz(6)
+  excluidoEm        DateTime?     @map("excluido_em") @db.Timestamptz(6)
+  tokens            TokenConta[]
+  aceites           AceiteLegal[]
+
+  @@map("usuario")
+}
+
+/// Token de uso único para verificação de e-mail ou redefinição de senha
+/// (RN-085, RN-086). Persistido apenas como SHA-256.
+model TokenConta {
+  id        String         @id @default(uuid()) @db.Uuid
+  usuarioId String         @map("usuario_id") @db.Uuid
+  tipo      TipoTokenConta
+  tokenHash String         @unique(map: "ux_token_hash") @map("token_hash") @db.VarChar(128)
+  expiraEm  DateTime       @map("expira_em") @db.Timestamptz(6)
+  usadoEm   DateTime?      @map("usado_em") @db.Timestamptz(6)
+  criadoEm  DateTime       @default(now()) @map("criado_em") @db.Timestamptz(6)
+  usuario   Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, tipo, criadoEm(sort: Desc)], map: "ix_token_usuario_tipo")
+  @@map("token_conta")
+}
+
+/// Evidência de consentimento legal versionado (RN-087). Nunca guarda IP puro.
+model AceiteLegal {
+  id        String          @id @default(uuid()) @db.Uuid
+  usuarioId String          @map("usuario_id") @db.Uuid
+  tipo      TipoAceiteLegal
+  versao    String          @db.VarChar(20)
+  aceitoEm  DateTime        @default(now()) @map("aceito_em") @db.Timestamptz(6)
+  ipHash    String?         @map("ip_hash") @db.VarChar(64)
+  usuario   Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, tipo, aceitoEm(sort: Desc)], map: "ix_aceite_usuario_tipo")
+  @@map("aceite_legal")
 }

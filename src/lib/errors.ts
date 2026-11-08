@@ -13,6 +13,13 @@ export type AppErrorCode =
   | "REQUISICAO_MALFORMADA"
   | "NAO_AUTENTICADO"
   | "AUTH_SESSAO_EXPIRADA"
+  | "AUTH_EMAIL_JA_CADASTRADO"
+  | "AUTH_SENHA_FRACA"
+  | "AUTH_ACEITE_OBRIGATORIO"
+  | "AUTH_VERSAO_TERMOS_DESATUALIZADA"
+  | "AUTH_TOKEN_INVALIDO"
+  | "AUTH_TOKEN_EXPIRADO"
+  | "AUTH_TOKEN_JA_USADO"
   | "SEM_PERMISSAO"
   | "RECURSO_NAO_ENCONTRADO"
   | "RATE_LIMIT_EXCEDIDO"
@@ -57,6 +64,19 @@ export const ERROR_CATALOG: Readonly<Record<AppErrorCode, ErrorCatalogEntry>> = 
   REQUISICAO_MALFORMADA: { status: 400, message: "Requisição inválida." },
   NAO_AUTENTICADO: { status: 401, message: "Sessão necessária." },
   AUTH_SESSAO_EXPIRADA: { status: 401, message: "Sua sessão expirou. Entre novamente." },
+  AUTH_EMAIL_JA_CADASTRADO: { status: 409, message: "Este e-mail já está cadastrado." },
+  AUTH_SENHA_FRACA: { status: 422, message: "A senha não atende aos requisitos mínimos." },
+  AUTH_ACEITE_OBRIGATORIO: {
+    status: 422,
+    message: "É necessário aceitar os termos e a política de privacidade.",
+  },
+  AUTH_VERSAO_TERMOS_DESATUALIZADA: {
+    status: 422,
+    message: "Os termos foram atualizados. Revise e aceite novamente.",
+  },
+  AUTH_TOKEN_INVALIDO: { status: 400, message: "Link inválido." },
+  AUTH_TOKEN_EXPIRADO: { status: 410, message: "Este link expirou." },
+  AUTH_TOKEN_JA_USADO: { status: 409, message: "Este link já foi utilizado." },
   SEM_PERMISSAO: { status: 403, message: "Você não tem permissão para esta operação." },
   RECURSO_NAO_ENCONTRADO: { status: 404, message: "Recurso não encontrado." },
   RATE_LIMIT_EXCEDIDO: { status: 429, message: "Muitas tentativas. Aguarde e tente novamente." },
@@ -146,6 +166,34 @@ export const errors = {
 
   authSessaoExpirada(details?: AppErrorDetails): AppError {
     return new AppError("AUTH_SESSAO_EXPIRADA", { details });
+  },
+
+  authEmailJaCadastrado(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_EMAIL_JA_CADASTRADO", { details });
+  },
+
+  authSenhaFraca(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_SENHA_FRACA", { details });
+  },
+
+  authAceiteObrigatorio(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_ACEITE_OBRIGATORIO", { details });
+  },
+
+  authVersaoTermosDesatualizada(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_VERSAO_TERMOS_DESATUALIZADA", { details });
+  },
+
+  authTokenInvalido(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_TOKEN_INVALIDO", { details });
+  },
+
+  authTokenExpirado(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_TOKEN_EXPIRADO", { details });
+  },
+
+  authTokenJaUsado(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_TOKEN_JA_USADO", { details });
   },
 
   semPermissao(details?: AppErrorDetails): AppError {
