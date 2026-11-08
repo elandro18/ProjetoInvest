@@ -21,8 +21,12 @@ function repositorioCom(conta: CredenciaisConta | null): ContaRepositorio {
     ativarConta: vi.fn(async () => null),
     substituirTokenVerificacao: vi.fn(async () => undefined),
     buscarCredenciais: vi.fn(async () => conta),
+    buscarCredenciaisPorId: vi.fn(async () => conta),
     registrarLogin: vi.fn(async () => undefined),
     buscarSessao: vi.fn(async () => null),
+    substituirTokenRedefinicao: vi.fn(async () => undefined),
+    redefinirSenha: vi.fn(async () => true),
+    encerrarConta: vi.fn(async () => true),
   };
 }
 

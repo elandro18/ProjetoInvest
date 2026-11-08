@@ -118,9 +118,44 @@ export interface ContaRepositorio {
   /** Credenciais (incluindo hash de senha) para a tentativa de login. */
   buscarCredenciais(email: string): Promise<CredenciaisConta | null>;
 
+  /** Credenciais por id — confirmação de senha no encerramento de conta. */
+  buscarCredenciaisPorId(usuarioId: string): Promise<CredenciaisConta | null>;
+
   /** Registra o instante do login bem-sucedido (RN-085). */
   registrarLogin(usuarioId: string, agora: Date): Promise<void>;
 
   /** Recarrega o estado da conta para validar a sessão (RN-085). */
   buscarSessao(usuarioId: string): Promise<SessaoConta | null>;
+
+  /** Invalida os tokens de redefinição pendentes e emite o novo, atomicamente. */
+  substituirTokenRedefinicao(input: {
+    readonly usuarioId: string;
+    readonly token: TokenRegistro;
+    readonly agora: Date;
+  }): Promise<void>;
+
+  /**
+   * Consome o token de redefinição, grava o novo hash de senha, invalida os
+   * demais tokens de redefinição e incrementa `sessionVersion` na mesma
+   * transação. `false` quando outra requisição consumiu o token antes.
+   */
+  redefinirSenha(input: {
+    readonly tokenId: string;
+    readonly usuarioId: string;
+    readonly senhaHash: string;
+    readonly agora: Date;
+  }): Promise<boolean>;
+
+  /**
+   * Anonimiza e encerra a conta numa transação: status `EXCLUIDA`,
+   * `excluidoEm`, nome/e-mail anonimizados, `sessionVersion` incrementada e
+   * tokens apagados. Aceites legais e registros financeiros são preservados.
+   * `false` quando a conta já estava encerrada.
+   */
+  encerrarConta(input: {
+    readonly usuarioId: string;
+    readonly nomeAnonimizado: string;
+    readonly emailAnonimizado: string;
+    readonly agora: Date;
+  }): Promise<boolean>;
 }

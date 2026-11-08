@@ -8,6 +8,7 @@ import {
   type ContaRepositorio,
   type StatusConta,
 } from "./repositorio";
+import { senhaAceitavel, type HashSenha } from "./senha";
 import {
   calcularExpiracao,
   VALIDADE_VERIFICACAO_EMAIL_MS,
@@ -24,8 +25,6 @@ import {
  * `PENDENTE_VERIFICACAO` com os dois aceites e o token de 24 h na mesma
  * transação, para não existir conta sem evidência de consentimento.
  */
-
-export type HashSenha = (senha: string) => Promise<string>;
 
 export interface CadastroComando {
   readonly nome: string;
@@ -51,27 +50,6 @@ export interface CadastroResultado {
   readonly id: string;
   readonly email: string;
   readonly statusConta: StatusConta;
-}
-
-/** Senha mínima de 10 caracteres (SECURITY.md §4). */
-export const SENHA_TAMANHO_MINIMO = 10;
-
-/** Lista curta de senhas triviais; a checagem é case-insensitive. */
-const SENHAS_COMUNS: ReadonlySet<string> = new Set([
-  "1234567890",
-  "12345678910",
-  "qwertyuiop",
-  "senha12345",
-  "password123",
-  "password1234",
-  "administrador",
-  "investimento",
-  "minhasenha1",
-  "abcd123456",
-]);
-
-export function senhaAceitavel(senha: string): boolean {
-  return senha.length >= SENHA_TAMANHO_MINIMO && !SENHAS_COMUNS.has(senha.toLowerCase());
 }
 
 function validarRegras(comando: CadastroComando): AppError | null {

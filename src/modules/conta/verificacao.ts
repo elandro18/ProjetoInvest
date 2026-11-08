@@ -1,6 +1,7 @@
 import { errors, type AppError } from "../../lib/errors";
 import { err, ok, type Result } from "../../lib/result";
-import type { ContaRepositorio, TokenPersistido } from "./repositorio";
+import type { ContaRepositorio } from "./repositorio";
+import { classificarTokenDeUso } from "./token-uso";
 import type { HashToken } from "./token";
 
 /**
@@ -32,26 +33,6 @@ export interface VerificacaoResultado {
   readonly emailVerificadoEm: string;
 }
 
-function classificacaoDoToken(registro: TokenPersistido, agora: Date): AppError | null {
-  if (registro.tipo !== "VERIFICACAO_EMAIL") {
-    return errors.authTokenInvalido();
-  }
-
-  if (registro.excluidoEm !== null || registro.statusConta === "EXCLUIDA") {
-    return errors.authTokenInvalido();
-  }
-
-  if (registro.usadoEm !== null) {
-    return errors.authTokenJaUsado();
-  }
-
-  if (registro.expiraEm.getTime() <= agora.getTime()) {
-    return errors.authTokenExpirado();
-  }
-
-  return null;
-}
-
 export async function verificarEmail(
   comando: VerificacaoComando,
   deps: VerificacaoDeps,
@@ -68,7 +49,7 @@ export async function verificarEmail(
     return err(errors.authTokenInvalido());
   }
 
-  const violacao = classificacaoDoToken(registro, agora);
+  const violacao = classificarTokenDeUso(registro, "VERIFICACAO_EMAIL", agora);
   if (violacao !== null) {
     return err(violacao);
   }

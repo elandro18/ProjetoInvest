@@ -140,25 +140,65 @@ export class ContaPrismaRepositorio implements ContaRepositorio {
     agora: Date;
   }): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      await tx.tokenConta.updateMany({
-        where: { usuarioId: input.usuarioId, tipo: "VERIFICACAO_EMAIL", usadoEm: null },
-        data: { usadoEm: input.agora },
+      await this.substituirToken(tx, {
+        usuarioId: input.usuarioId,
+        tipo: "VERIFICACAO_EMAIL",
+        token: input.token,
+        agora: input.agora,
       });
+    });
+  }
 
-      await tx.tokenConta.create({
-        data: {
-          usuarioId: input.usuarioId,
-          tipo: "VERIFICACAO_EMAIL",
-          tokenHash: input.token.hash,
-          expiraEm: input.token.expiraEm,
-        },
+  async substituirTokenRedefinicao(input: {
+    usuarioId: string;
+    token: TokenRegistro;
+    agora: Date;
+  }): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.substituirToken(tx, {
+        usuarioId: input.usuarioId,
+        tipo: "REDEFINICAO_SENHA",
+        token: input.token,
+        agora: input.agora,
       });
+    });
+  }
+
+  /** Invalida os tokens pendentes do mesmo tipo e cria o novo, no mesmo `tx`. */
+  private async substituirToken(
+    tx: Prisma.TransactionClient,
+    input: {
+      usuarioId: string;
+      tipo: "VERIFICACAO_EMAIL" | "REDEFINICAO_SENHA";
+      token: TokenRegistro;
+      agora: Date;
+    },
+  ): Promise<void> {
+    await tx.tokenConta.updateMany({
+      where: { usuarioId: input.usuarioId, tipo: input.tipo, usadoEm: null },
+      data: { usadoEm: input.agora },
+    });
+
+    await tx.tokenConta.create({
+      data: {
+        usuarioId: input.usuarioId,
+        tipo: input.tipo,
+        tokenHash: input.token.hash,
+        expiraEm: input.token.expiraEm,
+      },
     });
   }
 
   async buscarCredenciais(email: string): Promise<CredenciaisConta | null> {
     return this.prisma.usuario.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
+      select: { ...CAMPOS_CONTA, senhaHash: true, sessionVersion: true },
+    });
+  }
+
+  async buscarCredenciaisPorId(usuarioId: string): Promise<CredenciaisConta | null> {
+    return this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
       select: { ...CAMPOS_CONTA, senhaHash: true, sessionVersion: true },
     });
   }
@@ -175,6 +215,76 @@ export class ContaPrismaRepositorio implements ContaRepositorio {
     return this.prisma.usuario.findUnique({
       where: { id: usuarioId },
       select: { ...CAMPOS_CONTA, sessionVersion: true },
+    });
+  }
+
+  async redefinirSenha(input: {
+    tokenId: string;
+    usuarioId: string;
+    senhaHash: string;
+    agora: Date;
+  }): Promise<boolean> {
+    return this.prisma.$transaction(async (tx) => {
+      const consumido = await tx.tokenConta.updateMany({
+        where: { id: input.tokenId, usuarioId: input.usuarioId, usadoEm: null },
+        data: { usadoEm: input.agora },
+      });
+
+      if (consumido.count === 0) {
+        return false;
+      }
+
+      // Qualquer outro token de redefinição pendente deixa de valer.
+      await tx.tokenConta.updateMany({
+        where: { usuarioId: input.usuarioId, tipo: "REDEFINICAO_SENHA", usadoEm: null },
+        data: { usadoEm: input.agora },
+      });
+
+      await tx.usuario.update({
+        where: { id: input.usuarioId },
+        data: {
+          senhaHash: input.senhaHash,
+          sessionVersion: { increment: 1 },
+          atualizadoEm: input.agora,
+        },
+        select: { id: true },
+      });
+
+      return true;
+    });
+  }
+
+  async encerrarConta(input: {
+    usuarioId: string;
+    nomeAnonimizado: string;
+    emailAnonimizado: string;
+    agora: Date;
+  }): Promise<boolean> {
+    return this.prisma.$transaction(async (tx) => {
+      const anonimizada = await tx.usuario.updateMany({
+        where: {
+          id: input.usuarioId,
+          statusConta: { not: "EXCLUIDA" },
+          excluidoEm: null,
+        },
+        data: {
+          statusConta: "EXCLUIDA",
+          nome: input.nomeAnonimizado,
+          email: input.emailAnonimizado,
+          excluidoEm: input.agora,
+          atualizadoEm: input.agora,
+          sessionVersion: { increment: 1 },
+        },
+      });
+
+      if (anonimizada.count === 0) {
+        return false;
+      }
+
+      // Nenhum token sobrevive ao encerramento; aceites e dados financeiros ficam.
+      await tx.tokenConta.deleteMany({ where: { usuarioId: input.usuarioId } });
+
+      return true;
     });
   }
 }

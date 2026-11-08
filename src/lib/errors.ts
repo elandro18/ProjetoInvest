@@ -23,6 +23,7 @@ export type AppErrorCode =
   | "AUTH_TOKEN_INVALIDO"
   | "AUTH_TOKEN_EXPIRADO"
   | "AUTH_TOKEN_JA_USADO"
+  | "CONTA_EXCLUSAO_BLOQUEADA"
   | "SEM_PERMISSAO"
   | "RECURSO_NAO_ENCONTRADO"
   | "RATE_LIMIT_EXCEDIDO"
@@ -83,6 +84,10 @@ export const ERROR_CATALOG: Readonly<Record<AppErrorCode, ErrorCatalogEntry>> = 
   AUTH_TOKEN_INVALIDO: { status: 400, message: "Link inválido." },
   AUTH_TOKEN_EXPIRADO: { status: 410, message: "Este link expirou." },
   AUTH_TOKEN_JA_USADO: { status: 409, message: "Este link já foi utilizado." },
+  CONTA_EXCLUSAO_BLOQUEADA: {
+    status: 409,
+    message: "Não é possível encerrar a conta agora.",
+  },
   SEM_PERMISSAO: { status: 403, message: "Você não tem permissão para esta operação." },
   RECURSO_NAO_ENCONTRADO: { status: 404, message: "Recurso não encontrado." },
   RATE_LIMIT_EXCEDIDO: { status: 429, message: "Muitas tentativas. Aguarde e tente novamente." },
@@ -212,6 +217,10 @@ export const errors = {
 
   authTokenJaUsado(details?: AppErrorDetails): AppError {
     return new AppError("AUTH_TOKEN_JA_USADO", { details });
+  },
+
+  contaExclusaoBloqueada(details?: AppErrorDetails): AppError {
+    return new AppError("CONTA_EXCLUSAO_BLOQUEADA", { details });
   },
 
   semPermissao(details?: AppErrorDetails): AppError {
