@@ -28,6 +28,22 @@ export interface ContaResumo {
   readonly excluidoEm: Date | null;
 }
 
+/** Credenciais para autenticação — o hash de senha nunca sai da camada de persistência. */
+export interface CredenciaisConta extends ContaResumo {
+  readonly senhaHash: string;
+  readonly sessionVersion: number;
+}
+
+/** Estado da conta usado para validar uma sessão já emitida. */
+export interface SessaoConta {
+  readonly id: string;
+  readonly nome: string;
+  readonly email: string;
+  readonly statusConta: StatusConta;
+  readonly sessionVersion: number;
+  readonly excluidoEm: Date | null;
+}
+
 export interface AceiteRegistro {
   readonly tipo: TipoAceiteLegal;
   readonly versao: string;
@@ -98,4 +114,13 @@ export interface ContaRepositorio {
     readonly token: TokenRegistro;
     readonly agora: Date;
   }): Promise<void>;
+
+  /** Credenciais (incluindo hash de senha) para a tentativa de login. */
+  buscarCredenciais(email: string): Promise<CredenciaisConta | null>;
+
+  /** Registra o instante do login bem-sucedido (RN-085). */
+  registrarLogin(usuarioId: string, agora: Date): Promise<void>;
+
+  /** Recarrega o estado da conta para validar a sessão (RN-085). */
+  buscarSessao(usuarioId: string): Promise<SessaoConta | null>;
 }

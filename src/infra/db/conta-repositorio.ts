@@ -6,7 +6,9 @@ import {
   type ContaCriada,
   type ContaRepositorio,
   type ContaResumo,
+  type CredenciaisConta,
   type NovaConta,
+  type SessaoConta,
   type TokenPersistido,
   type TokenRegistro,
 } from "../../modules/conta/repositorio";
@@ -151,6 +153,28 @@ export class ContaPrismaRepositorio implements ContaRepositorio {
           expiraEm: input.token.expiraEm,
         },
       });
+    });
+  }
+
+  async buscarCredenciais(email: string): Promise<CredenciaisConta | null> {
+    return this.prisma.usuario.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      select: { ...CAMPOS_CONTA, senhaHash: true, sessionVersion: true },
+    });
+  }
+
+  async registrarLogin(usuarioId: string, agora: Date): Promise<void> {
+    await this.prisma.usuario.update({
+      where: { id: usuarioId },
+      data: { ultimoLoginEm: agora },
+      select: { id: true },
+    });
+  }
+
+  async buscarSessao(usuarioId: string): Promise<SessaoConta | null> {
+    return this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+      select: { ...CAMPOS_CONTA, sessionVersion: true },
     });
   }
 }

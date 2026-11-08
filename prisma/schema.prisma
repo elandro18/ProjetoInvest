@@ -130,6 +130,8 @@ model Usuario {
   email             String        @db.VarChar(160)
   senhaHash         String        @map("senha_hash")
   statusConta       StatusConta   @default(PENDENTE_VERIFICACAO) @map("status_conta")
+  /// Versão da sessão; incrementada para invalidar todos os JWT emitidos (RN-085, RN-086, RN-088).
+  sessionVersion    Int           @default(0) @map("session_version")
   emailVerificadoEm DateTime?     @map("email_verificado_em") @db.Timestamptz(6)
   ultimoLoginEm     DateTime?     @map("ultimo_login_em") @db.Timestamptz(6)
   criadoEm          DateTime      @default(now()) @map("criado_em") @db.Timestamptz(6)

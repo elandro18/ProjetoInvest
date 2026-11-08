@@ -17,6 +17,9 @@ export type AppErrorCode =
   | "AUTH_SENHA_FRACA"
   | "AUTH_ACEITE_OBRIGATORIO"
   | "AUTH_VERSAO_TERMOS_DESATUALIZADA"
+  | "AUTH_CREDENCIAIS_INVALIDAS"
+  | "AUTH_EMAIL_NAO_VERIFICADO"
+  | "AUTH_CONTA_SUSPENSA"
   | "AUTH_TOKEN_INVALIDO"
   | "AUTH_TOKEN_EXPIRADO"
   | "AUTH_TOKEN_JA_USADO"
@@ -74,6 +77,9 @@ export const ERROR_CATALOG: Readonly<Record<AppErrorCode, ErrorCatalogEntry>> = 
     status: 422,
     message: "Os termos foram atualizados. Revise e aceite novamente.",
   },
+  AUTH_CREDENCIAIS_INVALIDAS: { status: 401, message: "E-mail ou senha inválidos." },
+  AUTH_EMAIL_NAO_VERIFICADO: { status: 403, message: "Confirme seu e-mail para entrar." },
+  AUTH_CONTA_SUSPENSA: { status: 403, message: "Conta suspensa. Fale com o suporte." },
   AUTH_TOKEN_INVALIDO: { status: 400, message: "Link inválido." },
   AUTH_TOKEN_EXPIRADO: { status: 410, message: "Este link expirou." },
   AUTH_TOKEN_JA_USADO: { status: 409, message: "Este link já foi utilizado." },
@@ -182,6 +188,18 @@ export const errors = {
 
   authVersaoTermosDesatualizada(details?: AppErrorDetails): AppError {
     return new AppError("AUTH_VERSAO_TERMOS_DESATUALIZADA", { details });
+  },
+
+  authCredenciaisInvalidas(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_CREDENCIAIS_INVALIDAS", { details });
+  },
+
+  authEmailNaoVerificado(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_EMAIL_NAO_VERIFICADO", { details });
+  },
+
+  authContaSuspensa(details?: AppErrorDetails): AppError {
+    return new AppError("AUTH_CONTA_SUSPENSA", { details });
   },
 
   authTokenInvalido(details?: AppErrorDetails): AppError {

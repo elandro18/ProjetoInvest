@@ -1,9 +1,10 @@
 import { gerarToken, hashToken } from "../auth/token";
-import { hashSenha } from "../auth/password";
+import { hashSenha, verificarSenha } from "../auth/password";
 import { ContaPrismaRepositorio } from "../db/conta-repositorio";
 import { prisma } from "../db/client";
 import { getMailer } from "../mailer";
 import type { Mailer } from "../../modules/conta/mailer";
+import type { VerificarSenha } from "../../modules/conta/login";
 import type { ContaRepositorio } from "../../modules/conta/repositorio";
 import type { GerarToken, HashToken } from "../../modules/conta/token";
 
@@ -19,6 +20,7 @@ export interface ServicosConta {
   readonly repositorio: ContaRepositorio;
   readonly mailer: Mailer;
   readonly hashSenha: (senha: string) => Promise<string>;
+  readonly verificarSenha: VerificarSenha;
   readonly gerarToken: GerarToken;
   readonly hashToken: HashToken;
   readonly appUrl: string;
@@ -32,6 +34,7 @@ export function servicosConta(): ServicosConta {
     repositorio: new ContaPrismaRepositorio(prisma),
     mailer: getMailer(),
     hashSenha,
+    verificarSenha,
     gerarToken,
     hashToken,
     appUrl: process.env.APP_URL?.trim() || APP_URL_PADRAO,

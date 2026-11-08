@@ -63,6 +63,14 @@ export function jsonResponse(body: unknown, status: number, requestId: string): 
   });
 }
 
+/** Resposta sem corpo (204) mantendo o `x-request-id` da borda. */
+export function noContentResponse(requestId: string): Response {
+  return new Response(null, {
+    status: 204,
+    headers: { [REQUEST_ID_HEADER]: requestId },
+  });
+}
+
 export function toHttpResponse(error: unknown, traceId: string): Response {
   const { status, body } = toErrorBody(error, traceId);
   return jsonResponse(body, status, traceId);
