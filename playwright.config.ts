@@ -16,7 +16,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // O login usa Argon2id (memory-hard): acima de 3 workers no host local as
+  // verificações concorrentes estouram o timeout de navegação do login.
+  workers: process.env.CI ? 1 : 3,
   reporter: [["list"], ["html", { open: "never" }]],
   // Conta de teste ativada no banco para o login válido (limpa no teardown).
   globalSetup: "./e2e/global-setup.ts",

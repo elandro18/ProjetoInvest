@@ -213,3 +213,30 @@
 ### Removido
 
 - Nada.
+
+## 09/11/2026 — Renda fixa implementada (RN-057)
+
+### Implementado (código)
+
+- **RN-057-1** — tabela `investimento_renda_fixa` com enums de produto/indexador/liquidez/status, CHECKs de taxa, valor, saldo e datas, índices e trigger.
+- **RN-057-2** — `GET/POST /api/renda-fixa` e `PATCH /api/renda-fixa/{id}`; cobertura FGC derivada do produto; campos imutáveis após o cadastro.
+- **RN-057-3** — `GET /api/renda-fixa/alertas` com vencimento próximo, carência, ausência de liquidez diária, concentração por instituição e limite de FGC (os dois últimos só com limite configurado).
+- **RN-057-4** — tela `/renda-fixa` com lista, filtros, ordenação, formulário, diálogo de saldo e faixa de alertas.
+- **RN-057-5** — 8 cenários E2E (CDB/Tesouro, FGC, saldo, alerta, filtro, ordenação/paginação, 360 px e isolamento A/B).
+
+### Resultado das verificações
+
+- 542 testes unitários/integração + 25 E2E verdes.
+- Cobertura: 86,33% de linhas global; `src/modules/renda-fixa` 100% linhas e 99,39% branches.
+- `lint`, `typecheck`, `build` verdes.
+
+### Pendências
+
+- `RF_CONCENTRACAO_MAXIMA_PERCENTUAL` e `RF_LIMITE_FGC` sem valor default (`PEND-004`/`PEND-012`): sem configuração, esses alertas não são gerados.
+- "Hoje" dos alertas calculado em UTC — ajustar para `America/Sao_Paulo` se o produto exigir.
+- Não existe `GET /api/renda-fixa/{id}` (o contrato não prevê detalhe); o `PATCH` devolve o recurso completo.
+- Flake de timeout (5 s) no teste da ficha de ativo sob carga alta de workers — passa no rerun; workers locais reduzidos de 6 para 3.
+
+### Removido
+
+- Nada.
