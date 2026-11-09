@@ -211,6 +211,25 @@ Resposta é sempre neutra (RN-086). **Erros:** `RATE_LIMIT_EXCEDIDO` (429).
 
 Atualização parcial; `ticker` e `classeId` são imutáveis após existir movimentação (`ATIVO_CLASSE_IMUTAVEL`). Inativar = `{ "status": "INATIVO" }` (RN-013).
 
+### 3.5 `GET /api/referencia/ativos` — autenticado
+
+Retorna os catálogos usados pelos formulários e pelas metas de alocação.
+
+**200**
+
+```json
+{
+  "classes": [
+    { "id": "uuid", "codigo": "RENDA_FIXA", "nome": "Renda Fixa", "segmentos": [] },
+    { "id": "uuid", "codigo": "FII", "nome": "Fundos Imobiliários", "segmentos": [
+      { "id": "uuid", "codigo": "LOGISTICA", "nome": "Logística" }
+    ] }
+  ]
+}
+```
+
+**Erros:** `NAO_AUTENTICADO` 401.
+
 ---
 
 ## 4. Movimentações

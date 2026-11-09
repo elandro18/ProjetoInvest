@@ -31,6 +31,7 @@ status: draft
 | RN-010-4 | Frontend | ProjetoInvest | Implementar listagem e formulário de ativo |
 | RN-010-5 | Frontend | ProjetoInvest | Implementar ficha do ativo |
 | RN-010-6 | Backend | ProjetoInvest | Testes de cadastro, unicidade e inativação |
+| RN-010-7 | Backend | ProjetoInvest | Criar endpoint de referência de classes e segmentos |
 
 ## Ordem de Execução
 
@@ -38,7 +39,7 @@ status: draft
 RN-010-1
 
 **Wave 2 — Backend:**
-RN-010-2 → RN-010-3
+RN-010-2 → RN-010-3 → RN-010-7
 
 **Wave 3 — Frontend:**
 RN-010-4 → RN-010-5
@@ -233,3 +234,45 @@ Cobrir criação válida, duplicidade, FII sem segmento, CNPJ inválido, isolame
 - Dado ativo inativado, Quando consulto a carteira, Então ele continua listado.
 
 **Dependências:** RN-010-2, RN-010-3, RN-010-5
+
+---
+
+### RN-010-7. Criar endpoint de referência de classes e segmentos
+
+| Campo | Valor |
+|---|---|
+| **Título** | `[ProjetoInvest] RN-010-7 — Criar endpoint de referência de classes e segmentos` |
+| **Activity** | Development |
+| **RNs** | RN-011, RN-012 |
+
+**Descrição:**
+Criar `GET /api/referencia/ativos` (autenticado) devolvendo as classes ativas com seus segmentos aninhados. O endpoint alimenta os selects do formulário de ativo e, depois, a tela de metas (`RN-021`), sem que a UI precise acessar o banco.
+
+**Contrato:**
+
+```
+GET /api/referencia/ativos
+Response 200: { "classes": [ { "id", "codigo", "nome", "segmentos": [ { "id", "codigo", "nome" } ] } ] }
+Response 401: { "error": { "code": "NAO_AUTENTICADO" } }
+```
+
+**Tabelas de referência:**
+
+| Tabela | Coluna alvo | Uso |
+|---|---|---|
+| `classe_ativo` | `id`, `codigo`, `nome`, `ativo`, `ordem` | Lista de classes |
+| `segmento_ativo` | `id`, `classe_id`, `codigo`, `nome`, `ativo`, `ordem` | Segmentos por classe |
+
+**Validações / Erros:**
+- `NAO_AUTENTICADO`: sem sessão → 401.
+- Classe/segmento inativo não é retornado.
+
+**Critério de Aceitação:**
+- Dado o seed, Quando consulto autenticado, Então recebo 2 classes e 9 segmentos vinculados à classe FII, ordenados por `ordem`.
+- Dado acesso sem sessão, Quando consulto, Então recebo 401.
+
+**Dependências:** RN-010-1
+
+**Notas técnicas:**
+- Leitura via `src/infra/db` (rota pode usar infra), com sessão obrigatória.
+- Reaproveitar na RN-021 para montar as metas por classe e segmento.

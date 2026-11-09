@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/src/components/ui/button";
@@ -19,8 +19,12 @@ export interface PrivateHeaderProps {
  */
 export function PrivateHeader({ nome }: PrivateHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [saindo, setSaindo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  const ativosAtivo = pathname === "/ativos" || pathname.startsWith("/ativos/");
+  const contaAtivo = pathname === "/conta" || pathname.startsWith("/conta/");
 
   async function sair() {
     setErro(null);
@@ -55,16 +59,35 @@ export function PrivateHeader({ nome }: PrivateHeaderProps) {
           <span className="max-w-40 truncate text-sm text-neutral-700" title={nome}>
             {nome}
           </span>
-          <Link
-            href="/conta"
-            className="rounded-lg px-2 py-1 text-sm font-medium text-info hover:underline"
-            aria-current="page"
-          >
-            Conta
-          </Link>
-          <Button variant="secondary" onClick={sair} carregando={saindo} className="px-3 py-1.5">
-            {saindo ? "Saindo…" : "Sair"}
-          </Button>
+          <nav aria-label="Navegação principal" className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/ativos"
+              aria-current={ativosAtivo ? "page" : undefined}
+              className={[
+                "rounded-lg px-2 py-1 text-sm font-medium",
+                ativosAtivo
+                  ? "bg-neutral-100 text-neutral-900"
+                  : "text-info hover:underline",
+              ].join(" ")}
+            >
+              Ativos
+            </Link>
+            <Link
+              href="/conta"
+              aria-current={contaAtivo ? "page" : undefined}
+              className={[
+                "rounded-lg px-2 py-1 text-sm font-medium",
+                contaAtivo
+                  ? "bg-neutral-100 text-neutral-900"
+                  : "text-info hover:underline",
+              ].join(" ")}
+            >
+              Conta
+            </Link>
+            <Button variant="secondary" onClick={sair} carregando={saindo} className="px-3 py-1.5">
+              {saindo ? "Saindo…" : "Sair"}
+            </Button>
+          </nav>
         </div>
       </div>
       {erro === null ? null : (
