@@ -24,8 +24,14 @@ export interface ReferenciaCarteira {
 /** Posição com quantidade > 0, já com a referência da classe/segmento do ativo. */
 export interface PosicaoCarteira {
   readonly ativoId: string;
+  /** `ativo.ticker`. */
+  readonly ticker: string;
+  /** `ativo.nome`. */
+  readonly nome: string;
   /** `posicao_ativo.quantidade` com 8 casas. */
   readonly quantidade: string;
+  /** `posicao_ativo.preco_medio` com 6 casas. */
+  readonly precoMedio: string;
   /** `posicao_ativo.custo_total` com 2 casas. */
   readonly custoTotal: string;
   readonly classeId: string;

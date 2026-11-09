@@ -8,7 +8,6 @@ import { apresentarCarteira, apresentarEvolucao } from "./apresentacao";
 import {
   consolidarCarteira,
   type DadosConsolidacaoCarteira,
-  type ItemDistribuicaoCarteira,
 } from "./consolidar-carteira";
 import {
   inicioDoAno,
@@ -45,7 +44,10 @@ const SEGMENTOS: readonly ReferenciaCarteira[] = [
 function posicao(overrides: Partial<PosicaoCarteira> = {}): PosicaoCarteira {
   return {
     ativoId: "ativo-1",
+    ticker: "HGLG11",
+    nome: "CSHG Logística",
     quantidade: "100.00000000",
+    precoMedio: "600.000000",
     custoTotal: "60000.00",
     classeId: "c-fii",
     segmentoId: "s-log",
@@ -98,7 +100,7 @@ function movimentacao(
   };
 }
 
-function somarPercentuais(itens: readonly ItemDistribuicaoCarteira[]): string {
+function somarPercentuais(itens: readonly { readonly percentual: string }[]): string {
   return itens
     .reduce((soma, item) => soma.add(Decimal.from(item.percentual)), Decimal.zero(6))
     .toFixed(6);
@@ -362,6 +364,127 @@ describe("consolidarCarteira", () => {
     expect(carteira.porClasse).toEqual([
       expect.objectContaining({ codigo: "FII", valor: "10000.00", percentual: "100.000000" }),
     ]);
+    expect(carteira.posicoes[0]?.segmento).toBeNull();
+  });
+
+  it("expõe cada posição com classe, segmento e valor pelo custo (RN-020-5)", () => {
+    const carteira = consolidarCarteira(
+      dadosConsolidacao({
+        posicoes: [posicao()],
+        rendaFixa: { saldoTotal: "40000.00", quantidadeTitulos: 1 },
+      }),
+    );
+
+    expect(carteira.posicoes).toEqual([
+      {
+        ativoId: "ativo-1",
+        ticker: "HGLG11",
+        nome: "CSHG Logística",
+        classe: { codigo: "FII", nome: "Fundos Imobiliários" },
+        segmento: { codigo: "LOGISTICA", nome: "Logística" },
+        quantidade: "100.00000000",
+        precoMedio: "600.000000",
+        custoTotal: "60000.00",
+        valorAtual: "60000.00",
+        valorIndisponivel: true,
+        percentual: "60.000000",
+      },
+    ]);
+  });
+
+  it("não lista posição com quantidade zero ou negativa (RN-020-5)", () => {
+    const carteira = consolidarCarteira(
+      dadosConsolidacao({
+        posicoes: [
+          posicao({ ativoId: "a-positiva", ticker: "POSI11" }),
+          posicao({
+            ativoId: "a-zerada",
+            ticker: "ZERO11",
+            quantidade: "0.00000000",
+            custoTotal: "500.00",
+          }),
+          posicao({
+            ativoId: "a-negativa",
+            ticker: "NEGA11",
+            quantidade: "-1.00000000",
+            custoTotal: "100.00",
+          }),
+        ],
+      }),
+    );
+
+    expect(carteira.posicoes.map((item) => item.ativoId)).toEqual(["a-positiva"]);
+  });
+
+  it("ordena por valor atual desc e calcula o percentual sobre o patrimônio total (RN-020-5)", () => {
+    const carteira = consolidarCarteira(
+      dadosConsolidacao({
+        posicoes: [
+          posicao({
+            ativoId: "a-pequena",
+            ticker: "PEQU11",
+            precoMedio: "100.000000",
+            custoTotal: "10000.00",
+          }),
+          posicao({
+            ativoId: "a-grande",
+            ticker: "GRAN11",
+            precoMedio: "500.000000",
+            custoTotal: "50000.00",
+          }),
+          posicao({
+            ativoId: "a-media",
+            ticker: "MEDI11",
+            precoMedio: "300.000000",
+            custoTotal: "30000.00",
+            segmentoId: "s-shop",
+          }),
+        ],
+        rendaFixa: { saldoTotal: "50000.00", quantidadeTitulos: 1 },
+      }),
+    );
+
+    expect(carteira.resumo.patrimonioTotal).toBe("140000.00");
+    expect(carteira.posicoes.map((item) => item.ativoId)).toEqual([
+      "a-grande",
+      "a-media",
+      "a-pequena",
+    ]);
+    expect(carteira.posicoes.map((item) => item.percentual)).toEqual([
+      "35.714286",
+      "21.428571",
+      "7.142857",
+    ]);
+    expect(carteira.posicoes[1]?.segmento).toEqual({
+      codigo: "SHOPPING",
+      nome: "Shopping Centers",
+    });
+  });
+
+  it("desempata a ordem por ticker quando o valor atual é igual (RN-020-5)", () => {
+    const carteira = consolidarCarteira(
+      dadosConsolidacao({
+        posicoes: [
+          posicao({ ativoId: "a-z", ticker: "ZZZZ11", custoTotal: "1000.00" }),
+          posicao({ ativoId: "a-a", ticker: "AAAA11", custoTotal: "1000.00" }),
+        ],
+      }),
+    );
+
+    expect(carteira.posicoes.map((item) => item.ticker)).toEqual([
+      "AAAA11",
+      "ZZZZ11",
+    ]);
+  });
+
+  it("devolve posições vazias para a carteira sem posição (RN-020-5)", () => {
+    const carteira = consolidarCarteira(
+      dadosConsolidacao({
+        rendaFixa: { saldoTotal: "10000.00", quantidadeTitulos: 1 },
+      }),
+    );
+
+    expect(carteira.posicoes).toEqual([]);
   });
 
   it("aceita metadados de cotação quando houver mercado", () => {
@@ -390,6 +513,21 @@ describe("consolidarCarteira", () => {
     expect(api.resumo.patrimonioTotal).toBe("100000.00");
     expect(api.consistente).toBe(true);
     expect(api.porClasse).toHaveLength(2);
+    expect(api.posicoes).toEqual([
+      {
+        ativoId: "ativo-1",
+        ticker: "HGLG11",
+        nome: "CSHG Logística",
+        classe: { codigo: "FII", nome: "Fundos Imobiliários" },
+        segmento: { codigo: "LOGISTICA", nome: "Logística" },
+        quantidade: "100.00000000",
+        precoMedio: "600.000000",
+        custoTotal: "60000.00",
+        valorAtual: "60000.00",
+        valorIndisponivel: true,
+        percentual: "60.000000",
+      },
+    ]);
   });
 });
 

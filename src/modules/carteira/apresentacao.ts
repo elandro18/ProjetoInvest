@@ -2,6 +2,8 @@ import type {
   CarteiraConsolidada,
   CotacoesCarteira,
   ItemDistribuicaoCarteira,
+  PosicaoCarteiraConsolidada,
+  ReferenciaPosicaoCarteira,
   ResumoCarteira,
 } from "./consolidar-carteira";
 import type { EvolucaoCarteira, PontoEvolucaoCarteira } from "./evolucao-carteira";
@@ -37,9 +39,25 @@ export interface CarteiraApi {
   readonly resumo: ResumoCarteiraApi;
   readonly porClasse: readonly ItemDistribuicaoApi[];
   readonly porSegmento: readonly ItemDistribuicaoApi[];
+  readonly posicoes: readonly PosicaoApi[];
   readonly consistente: boolean;
   readonly atualizadoEm: string;
   readonly cotacoes: CotacoesCarteira;
+}
+
+/** Linha da tabela de posições (RN-020-5; API_CONTRACTS.md §5.1). */
+export interface PosicaoApi {
+  readonly ativoId: string;
+  readonly ticker: string;
+  readonly nome: string;
+  readonly classe: ReferenciaPosicaoCarteira;
+  readonly segmento: ReferenciaPosicaoCarteira | null;
+  readonly quantidade: string;
+  readonly precoMedio: string;
+  readonly custoTotal: string;
+  readonly valorAtual: string;
+  readonly valorIndisponivel: boolean;
+  readonly percentual: string;
 }
 
 export interface PontoEvolucaoApi {
@@ -76,11 +94,31 @@ function apresentarItem(item: ItemDistribuicaoCarteira): ItemDistribuicaoApi {
   };
 }
 
+function apresentarPosicao(posicao: PosicaoCarteiraConsolidada): PosicaoApi {
+  return {
+    ativoId: posicao.ativoId,
+    ticker: posicao.ticker,
+    nome: posicao.nome,
+    classe: { codigo: posicao.classe.codigo, nome: posicao.classe.nome },
+    segmento:
+      posicao.segmento === null
+        ? null
+        : { codigo: posicao.segmento.codigo, nome: posicao.segmento.nome },
+    quantidade: posicao.quantidade,
+    precoMedio: posicao.precoMedio,
+    custoTotal: posicao.custoTotal,
+    valorAtual: posicao.valorAtual,
+    valorIndisponivel: posicao.valorIndisponivel,
+    percentual: posicao.percentual,
+  };
+}
+
 export function apresentarCarteira(carteira: CarteiraConsolidada): CarteiraApi {
   return {
     resumo: apresentarResumo(carteira.resumo),
     porClasse: carteira.porClasse.map(apresentarItem),
     porSegmento: carteira.porSegmento.map(apresentarItem),
+    posicoes: carteira.posicoes.map(apresentarPosicao),
     consistente: carteira.consistente,
     atualizadoEm: carteira.atualizadoEm,
     cotacoes: {

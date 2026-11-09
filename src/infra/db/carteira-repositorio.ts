@@ -32,8 +32,11 @@ export class CarteiraPrismaRepositorio implements CarteiraRepositorio {
         select: {
           ativoId: true,
           quantidade: true,
+          precoMedio: true,
           custoTotal: true,
-          ativo: { select: { classeId: true, segmentoId: true } },
+          ativo: {
+            select: { ticker: true, nome: true, classeId: true, segmentoId: true },
+          },
         },
       }),
       this.prisma.investimentoRendaFixa.aggregate({
@@ -61,7 +64,10 @@ export class CarteiraPrismaRepositorio implements CarteiraRepositorio {
     return {
       posicoes: posicoes.map((posicao) => ({
         ativoId: posicao.ativoId,
+        ticker: posicao.ativo.ticker,
+        nome: posicao.ativo.nome,
         quantidade: posicao.quantidade.toFixed(8),
+        precoMedio: posicao.precoMedio.toFixed(6),
         custoTotal: posicao.custoTotal.toFixed(2),
         classeId: posicao.ativo.classeId,
         segmentoId: posicao.ativo.segmentoId,

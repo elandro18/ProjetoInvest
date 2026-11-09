@@ -69,6 +69,33 @@ export interface ItemDistribuicaoCarteira {
   readonly valorIndisponivel: boolean;
 }
 
+/** Rótulo de classe/segmento exposto na linha da posição. */
+export interface ReferenciaPosicaoCarteira {
+  readonly codigo: string;
+  readonly nome: string;
+}
+
+/** Linha da tabela de posições de FII de `GET /api/carteira` (RN-020-5). */
+export interface PosicaoCarteiraConsolidada {
+  readonly ativoId: string;
+  readonly ticker: string;
+  readonly nome: string;
+  readonly classe: ReferenciaPosicaoCarteira;
+  /** `null` quando o ativo não tem segmento (ou o segmento sai do catálogo). */
+  readonly segmento: ReferenciaPosicaoCarteira | null;
+  /** `posicao_ativo.quantidade` com 8 casas. */
+  readonly quantidade: string;
+  /** `posicao_ativo.preco_medio` com 6 casas. */
+  readonly precoMedio: string;
+  /** `posicao_ativo.custo_total` com 2 casas. */
+  readonly custoTotal: string;
+  /** Sem cotação na Fase 1, é o custo de aquisição (RN-091). */
+  readonly valorAtual: string;
+  readonly valorIndisponivel: boolean;
+  /** Percentual sobre o patrimônio total, com 6 casas (RN-089). */
+  readonly percentual: string;
+}
+
 /** Diagnóstico interno da consistência — não faz parte do contrato público. */
 export interface DiagnosticoConsistencia {
   readonly somaClasses: string;
@@ -80,6 +107,8 @@ export interface CarteiraConsolidada {
   readonly resumo: ResumoCarteira;
   readonly porClasse: readonly ItemDistribuicaoCarteira[];
   readonly porSegmento: readonly ItemDistribuicaoCarteira[];
+  /** Uma linha por posição com quantidade > 0, ordenada por valor atual desc. */
+  readonly posicoes: readonly PosicaoCarteiraConsolidada[];
   readonly consistente: boolean;
   readonly diagnostico: DiagnosticoConsistencia;
   /** Instante da consulta em ISO-8601 UTC. */
@@ -223,6 +252,94 @@ function distribuirSegmentos(
     percentual: percentualSobreTotal(item.valor, total).toFixed(ESCALA_PERCENTUAL),
     valorIndisponivel: item.valorIndisponivel,
   }));
+}
+
+interface PosicaoBruta {
+  readonly ativoId: string;
+  readonly ticker: string;
+  readonly nome: string;
+  readonly classe: ReferenciaPosicaoCarteira;
+  readonly segmento: ReferenciaPosicaoCarteira | null;
+  readonly quantidade: Decimal;
+  readonly precoMedio: Decimal;
+  readonly custoTotal: Decimal;
+  readonly valorAtual: Decimal;
+}
+
+function referenciarPosicao(
+  referencia: ReferenciaCarteira,
+): ReferenciaPosicaoCarteira {
+  return { codigo: referencia.codigo, nome: referencia.nome };
+}
+
+/**
+ * Monta as posições de `GET /api/carteira` (RN-020-5).
+ *
+ * Somente posições com quantidade positiva entram — posição zerada não é uma
+ * posição de FII. Sem cotação na Fase 1, `valorAtual` é o custo e a linha é
+ * marcada `valorIndisponivel` (RN-091); o percentual usa o patrimônio total
+ * como denominador (RN-089). Ordem por `valorAtual` desc com desempate por
+ * ticker, para a resposta ser determinística.
+ *
+ * Posição cuja classe não aparece no catálogo é dado corrompido (a FK garante
+ * a existência): não vira linha porque o contrato exige `classe`, mas continua
+ * somando no patrimônio total — a divergência é sinalizada por `consistente`.
+ */
+function montarPosicoes(
+  posicoes: readonly PosicaoCarteira[],
+  classesPorId: ReadonlyMap<string, ReferenciaCarteira>,
+  segmentosPorId: ReadonlyMap<string, ReferenciaCarteira>,
+  patrimonioTotal: Decimal,
+): readonly PosicaoCarteiraConsolidada[] {
+  const itens: PosicaoBruta[] = [];
+
+  for (const posicao of posicoes) {
+    const quantidade = Decimal.from(posicao.quantidade);
+    if (!quantidade.gt("0")) {
+      continue;
+    }
+
+    const classe = classesPorId.get(posicao.classeId);
+    if (classe === undefined) {
+      continue;
+    }
+
+    const segmento =
+      posicao.segmentoId === null ? undefined : segmentosPorId.get(posicao.segmentoId);
+
+    itens.push({
+      ativoId: posicao.ativoId,
+      ticker: posicao.ticker,
+      nome: posicao.nome,
+      classe: referenciarPosicao(classe),
+      segmento: segmento === undefined ? null : referenciarPosicao(segmento),
+      quantidade,
+      precoMedio: Decimal.from(posicao.precoMedio),
+      custoTotal: Decimal.from(posicao.custoTotal),
+      // Sem cotação na Fase 1, valor atual = custo de aquisição (RN-091).
+      valorAtual: Decimal.from(posicao.custoTotal),
+    });
+  }
+
+  return itens
+    .sort(
+      (a, b) => b.valorAtual.compare(a.valorAtual) || a.ticker.localeCompare(b.ticker),
+    )
+    .map((item) => ({
+      ativoId: item.ativoId,
+      ticker: item.ticker,
+      nome: item.nome,
+      classe: item.classe,
+      segmento: item.segmento,
+      quantidade: item.quantidade.toFixed(8),
+      precoMedio: item.precoMedio.toFixed(6),
+      custoTotal: item.custoTotal.toFixed(2),
+      valorAtual: item.valorAtual.toFixed(2),
+      valorIndisponivel: true,
+      percentual: percentualSobreTotal(item.valorAtual, patrimonioTotal).toFixed(
+        ESCALA_PERCENTUAL,
+      ),
+    }));
 }
 
 interface AgregacaoPosicoes {
@@ -399,6 +516,12 @@ export function consolidarCarteira(dados: DadosConsolidacaoCarteira): CarteiraCo
     }),
     porClasse: distribuirClasses(itensClasse, patrimonioTotal),
     porSegmento: distribuirSegmentos(itensSegmento, patrimonioTotal),
+    posicoes: montarPosicoes(
+      dados.posicoes,
+      classesPorId,
+      segmentosPorId,
+      patrimonioTotal,
+    ),
     consistente: consistencia.consistente,
     diagnostico: {
       somaClasses: consistencia.somaClasses.toFixed(2),
