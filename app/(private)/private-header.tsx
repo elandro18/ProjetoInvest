@@ -23,6 +23,7 @@ export function PrivateHeader({ nome }: PrivateHeaderProps) {
   const [saindo, setSaindo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  const carteiraAtivo = pathname === "/carteira" || pathname.startsWith("/carteira/");
   const ativosAtivo = pathname === "/ativos" || pathname.startsWith("/ativos/");
   const movimentacoesAtivo =
     pathname === "/movimentacoes" || pathname.startsWith("/movimentacoes/");
@@ -65,6 +66,18 @@ export function PrivateHeader({ nome }: PrivateHeaderProps) {
             {nome}
           </span>
           <nav aria-label="Navegação principal" className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/carteira"
+              aria-current={carteiraAtivo ? "page" : undefined}
+              className={[
+                "rounded-lg px-2 py-1 text-sm font-medium",
+                carteiraAtivo
+                  ? "bg-neutral-100 text-neutral-900"
+                  : "text-info hover:underline",
+              ].join(" ")}
+            >
+              Carteira
+            </Link>
             <Link
               href="/movimentacoes"
               aria-current={movimentacoesAtivo ? "page" : undefined}
