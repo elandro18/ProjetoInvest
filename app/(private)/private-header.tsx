@@ -28,6 +28,7 @@ export function PrivateHeader({ nome }: PrivateHeaderProps) {
     pathname === "/movimentacoes" || pathname.startsWith("/movimentacoes/");
   const rendaFixaAtivo =
     pathname === "/renda-fixa" || pathname.startsWith("/renda-fixa/");
+  const alocacaoAtivo = pathname === "/alocacao" || pathname.startsWith("/alocacao/");
   const contaAtivo = pathname === "/conta" || pathname.startsWith("/conta/");
 
   async function sair() {
@@ -99,6 +100,18 @@ export function PrivateHeader({ nome }: PrivateHeaderProps) {
               ].join(" ")}
             >
               Renda fixa
+            </Link>
+            <Link
+              href="/alocacao"
+              aria-current={alocacaoAtivo ? "page" : undefined}
+              className={[
+                "rounded-lg px-2 py-1 text-sm font-medium",
+                alocacaoAtivo
+                  ? "bg-neutral-100 text-neutral-900"
+                  : "text-info hover:underline",
+              ].join(" ")}
+            >
+              Alocação
             </Link>
             <Link
               href="/conta"
