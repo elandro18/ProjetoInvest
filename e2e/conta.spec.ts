@@ -28,7 +28,7 @@ function usuarioDisponivel(): UsuarioE2E {
     throw new Error("usuário E2E indisponível");
   }
 
-  return registro.usuario;
+  return registro.usuarios.a;
 }
 
 async function entrar(page: Page, usuario: UsuarioE2E): Promise<void> {

@@ -6,11 +6,12 @@ import { apagarRegistro, lerRegistro } from "./usuario-e2e";
 const logSilencioso = { info: () => undefined, error: () => undefined };
 
 /**
- * Remove o usuário de teste e a fixture ao fim do E2E (RN-085-9).
+ * Limpa o E2E de ativos (RN-010, AC-070).
  *
- * Os tokens de conta caem por cascade; qualquer outro resíduo do usuário de
- * teste (aceites) também. Nada é apagado em massa: só o id registrado no
- * setup.
+ * A FK `ativo.usuario_id` é `ON DELETE RESTRICT`: os ativos do(s) titular(es)
+ * de teste são apagados **antes** das contas. Tokens e aceites caem por
+ * cascade. Nada é apagado em massa — só os ids registrados na fixture. As
+ * contagens finais são impressas como evidência de banco limpo.
  */
 export default async function globalTeardown(): Promise<void> {
   const registro = lerRegistro();
@@ -21,10 +22,26 @@ export default async function globalTeardown(): Promise<void> {
 
     try {
       await prisma.$connect();
-      await prisma.usuario.delete({ where: { id: registro.usuario.id } });
+
+      const ids = [registro.usuarios.a.id, registro.usuarios.b.id];
+
+      const ativos = await prisma.ativo.deleteMany({
+        where: { usuarioId: { in: ids } },
+      });
+      const usuarios = await prisma.usuario.deleteMany({ where: { id: { in: ids } } });
+
+      const [ativosRestantes, usuariosRestantes] = await Promise.all([
+        prisma.ativo.count(),
+        prisma.usuario.count(),
+      ]);
+
+      process.stdout.write(
+        `[e2e] Limpeza: ${ativos.count} ativo(s) e ${usuarios.count} usuário(s) de teste removidos; ` +
+          `restam ${ativosRestantes} ativo(s) e ${usuariosRestantes} usuário(s).\n`,
+      );
     } catch (erro) {
       const motivo = erro instanceof Error ? erro.message : String(erro);
-      process.stdout.write(`[e2e] Falha ao limpar usuário de teste: ${motivo}\n`);
+      process.stdout.write(`[e2e] Falha ao limpar dados de teste: ${motivo}\n`);
     } finally {
       await prisma.$disconnect().catch(() => undefined);
     }

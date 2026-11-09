@@ -184,3 +184,32 @@
 ### Removido
 
 - Nada.
+
+## 08/11/2026 — Cadastro de ativos implementado (RN-010)
+
+### Implementado (código)
+
+- **RN-010-1** — tabela `ativo` com unicidade `(usuario_id, ticker)`, CHECK de ticker e trigger de `atualizado_em`.
+- **RN-010-2** — `GET/POST /api/ativos` com busca, filtros, paginação e validação de classe/segmento/CNPJ.
+- **RN-010-3** — `GET/PATCH /api/ativos/{id}` com imutabilidade de `ticker`/`classeId` e inativação por status.
+- **RN-010-4** — listagem com busca, filtros, tabela/cartões e formulário com selects dependentes e máscara de CNPJ.
+- **RN-010-5** — ficha com abas, edição de campos permitidos e inativar/reativar com confirmação.
+- **RN-010-7** — `GET /api/referencia/ativos` com classes e segmentos aninhados (alimenta o formulário e a futura tela de metas).
+- **RN-010-6** — 17 cenários E2E (CRUD, filtros, ficha, mobile e isolamento A/B entre usuários).
+
+### Resultado das verificações
+
+- 457 testes unitários/integração + 17 E2E verdes.
+- Cobertura: 85,98% de linhas global; `src/modules/**` 100% linhas e branches.
+- `lint`, `typecheck`, `build` verdes.
+
+### Pendências
+
+- `fonteDados` é texto livre: a validação contra `provedor_dados` (contrato §3.2) fica para quando houver endpoint de provedores.
+- `posicao`, `rendimentosAcumulados` e `ultimosPrecos` são placeholders contratuais até RN-014/RN-017/RN-030.
+- Ficha externa é placeholder até a Fase 3 (RN-029/RN-035).
+- Cadastro cria sempre `ATIVO` (o contrato não aceita `status` no POST).
+
+### Removido
+
+- Nada.

@@ -2,21 +2,26 @@ import { loadEnvConfig } from "@next/env";
 import { PrismaClient } from "@prisma/client";
 
 import { hashSenha } from "../src/infra/auth/password";
+import { garantirReferencia } from "./referencia-e2e";
 import {
   emailUsuarioE2E,
   gravarRegistro,
-  NOME_USUARIO_E2E,
+  nomeUsuarioE2E,
   SENHA_USUARIO_E2E,
+  type ChaveUsuarioE2E,
 } from "./usuario-e2e";
 
 const logSilencioso = { info: () => undefined, error: () => undefined };
 
 /**
- * Cria o usuário ativado usado pelo E2E de login (RN-085-9).
+ * Prepara o E2E de ativos (RN-010, AC-070).
  *
- * Usa o mesmo `hashSenha` (Argon2id) do runtime para que a senha de teste seja
- * verificada exatamente como uma senha real. Falha de banco não derruba a
- * suíte: grava a fixture como indisponível e o teste de login válido é pulado.
+ * - Garante o catálogo de classes/segmentos (o CI não roda o seed);
+ * - cria **dois** titulares ativados (A e B) no Postgres, com o mesmo
+ *   `hashSenha` (Argon2id) do runtime, para o fluxo de cadastro e para o
+ *   isolamento entre usuários;
+ * - grava a fixture com os dois. Falha de banco não derruba a suíte: grava
+ *   `disponivel: false` e os testes dependentes são pulados.
  */
 export default async function globalSetup(): Promise<void> {
   loadEnvConfig(process.cwd(), false, logSilencioso);
@@ -25,28 +30,46 @@ export default async function globalSetup(): Promise<void> {
 
   try {
     await prisma.$connect();
+    await garantirReferencia(prisma);
 
-    const email = emailUsuarioE2E();
     const senhaHash = await hashSenha(SENHA_USUARIO_E2E);
-    const usuario = await prisma.usuario.create({
-      data: {
-        nome: NOME_USUARIO_E2E,
-        email,
-        senhaHash,
-        statusConta: "ATIVA",
-        emailVerificadoEm: new Date(),
-      },
-      select: { id: true },
-    });
+    const agora = Date.now();
+
+    const criar = (chave: ChaveUsuarioE2E) =>
+      prisma.usuario.create({
+        data: {
+          nome: nomeUsuarioE2E(chave),
+          email: emailUsuarioE2E(chave, agora),
+          senhaHash,
+          statusConta: "ATIVA",
+          emailVerificadoEm: new Date(),
+        },
+        select: { id: true },
+      });
+
+    const [a, b] = await prisma.$transaction([criar("a"), criar("b")]);
 
     gravarRegistro({
       disponivel: true,
-      usuario: { id: usuario.id, nome: NOME_USUARIO_E2E, email, senha: SENHA_USUARIO_E2E },
+      usuarios: {
+        a: {
+          id: a.id,
+          nome: nomeUsuarioE2E("a"),
+          email: emailUsuarioE2E("a", agora),
+          senha: SENHA_USUARIO_E2E,
+        },
+        b: {
+          id: b.id,
+          nome: nomeUsuarioE2E("b"),
+          email: emailUsuarioE2E("b", agora),
+          senha: SENHA_USUARIO_E2E,
+        },
+      },
     });
   } catch (erro) {
     const motivo = erro instanceof Error ? erro.message : String(erro);
     process.stdout.write(
-      `[e2e] Usuário de teste não criado (login válido será ignorado): ${motivo}\n`,
+      `[e2e] Usuários de teste não criados (fluxos autenticados serão ignorados): ${motivo}\n`,
     );
     gravarRegistro({ disponivel: false, motivo });
   } finally {
