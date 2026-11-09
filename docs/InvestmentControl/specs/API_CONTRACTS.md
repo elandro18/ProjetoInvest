@@ -416,11 +416,14 @@ Substitui o conjunto vigente em transação (RN-021, RN-022).
       "percentualMeta": "50.000000",
       "desvioPontos": "-9.959000",
       "valorParaMeta": "15170.00",
-      "situacao": "ABAIXO"
+      "situacao": "ABAIXO",
+      "valorIndisponivel": false
     }
   ]
 }
 ```
+
+> `valorIndisponivel: true` indica que o valor atual veio do **custo** de aquisição, não de cotação de mercado (RN-091). A base de cálculo é sempre o patrimônio total (RN-089).
 
 > `baseCalculo` de segmento é sempre `PATRIMONIO_TOTAL` e "Caixa e Oportunidades" é um segmento como os demais (RN-089).
 

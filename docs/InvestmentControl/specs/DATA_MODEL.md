@@ -255,7 +255,8 @@ erDiagram
 | `vigencia_fim` | date | NULL, `>= vigencia_inicio` | Nulo = vigente |
 | `criado_em` | timestamptz | NOT NULL | — |
 
-**Checks:** `chk_meta_referencia` (exatamente um entre `classe_id` e `segmento_id`, coerente com `escopo`); unicidade de `(usuario_id, escopo, referencia, vigencia_inicio)`.
+**Checks:** `chk_meta_referencia` (exatamente um entre `classe_id` e `segmento_id`, coerente com `escopo`); `chk_meta_percentual`; `chk_meta_vigencia`.
+**Vigência:** índices únicos parciais garantem **uma única linha vigente por referência** — `ux_meta_vigente_classe` em `(usuario_id, classe_id)` e `ux_meta_vigente_segmento` em `(usuario_id, segmento_id)`, ambos `WHERE vigencia_fim IS NULL`. Uma substituição encerra a vigência anterior e insere o novo conjunto na mesma transação.
 **Validação de soma 100%:** na camada de domínio, dentro de transação — não é constraint de linha (RN-021, RN-022).
 
 ### 4.10 `criterio_avaliacao`
@@ -480,12 +481,12 @@ Regras: nenhum índice em coluna de baixa cardinalidade isolada (`status` só co
 |---|---|
 | Classes | `RENDA_FIXA` (Renda Fixa), `FII` (Fundos Imobiliários) |
 | Segmentos | Logística 25%, Shopping 15%, Renda Urbana e Híbridos 15%, Recebíveis 25%, Lajes 10%, Agro 5%, Caixa e Oportunidades 5% |
-| Metas de classe | Renda Fixa 50%, FII 50% |
+| Metas (default por usuário) | Aplicadas no **primeiro acesso**, não no seed global: classe Renda Fixa 50% / FII 50%; segmentos Logística 25, Shopping 15, Recebíveis 25, Lajes 10, Agro 5, Caixa e Oportunidades 5, Renda Urbana 7,5 e Híbridos 7,5 (a especificação agrupa os dois últimos em 15%) |
 | Critérios | Qualidade dos ativos 20, Diversificação 15, Saúde financeira 15, Histórico e gestão 15, Segmento e resiliência 10, Preço e valuation 15, Rendimentos e sustentabilidade 10 |
 | Provedores | `cvm` (capacidade `informes`, `cadastro`, `composicao`); provedor de mercado a definir (`PEND-001`) |
 | Limites | A definir pelo titular (`PEND-004`) — nenhum default silencioso |
 
-Seeds são idempotentes e versionados em `prisma/seed.ts`; rodam apenas quando a tabela correspondente está vazia para o usuário.
+Seeds globais são idempotentes e versionados em `prisma/seed.ts`; rodam apenas quando a tabela correspondente está vazia. As **metas de alocação são por usuário** e criadas de forma lazy no primeiro acesso, em transação (`obter-metas`).
 
 ---
 

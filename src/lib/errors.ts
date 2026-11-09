@@ -46,6 +46,10 @@ export type AppErrorCode =
   | "RF_TAXA_INVALIDA"
   | "RF_SALDO_INVALIDO"
   | "RF_CAMPO_IMUTAVEL"
+  | "ALO_SOMA_METAS_INVALIDA"
+  | "ALO_REFERENCIA_INVALIDA"
+  | "ALO_META_DUPLICADA"
+  | "ALO_METAS_AUSENTES"
   | "SEM_PERMISSAO"
   | "RECURSO_NAO_ENCONTRADO"
   | "RATE_LIMIT_EXCEDIDO"
@@ -170,6 +174,19 @@ export const ERROR_CATALOG: Readonly<Record<AppErrorCode, ErrorCatalogEntry>> = 
   RF_CAMPO_IMUTAVEL: {
     status: 422,
     message: "Produto, indexador e data de aplicação não podem ser alterados.",
+  },
+  ALO_SOMA_METAS_INVALIDA: {
+    status: 422,
+    message: "A soma das metas deve ser 100%.",
+  },
+  ALO_REFERENCIA_INVALIDA: { status: 422, message: "Classe ou segmento inválido." },
+  ALO_META_DUPLICADA: {
+    status: 422,
+    message: "Referência repetida na mesma configuração.",
+  },
+  ALO_METAS_AUSENTES: {
+    status: 409,
+    message: "Configure as metas antes de calcular aportes.",
   },
   SEM_PERMISSAO: { status: 403, message: "Você não tem permissão para esta operação." },
   RECURSO_NAO_ENCONTRADO: { status: 404, message: "Recurso não encontrado." },
@@ -392,6 +409,22 @@ export const errors = {
 
   rfCampoImutavel(details?: AppErrorDetails): AppError {
     return new AppError("RF_CAMPO_IMUTAVEL", { details });
+  },
+
+  aloSomaMetasInvalida(details?: AppErrorDetails): AppError {
+    return new AppError("ALO_SOMA_METAS_INVALIDA", { details });
+  },
+
+  aloReferenciaInvalida(details?: AppErrorDetails): AppError {
+    return new AppError("ALO_REFERENCIA_INVALIDA", { details });
+  },
+
+  aloMetaDuplicada(details?: AppErrorDetails): AppError {
+    return new AppError("ALO_META_DUPLICADA", { details });
+  },
+
+  aloMetasAusentes(details?: AppErrorDetails): AppError {
+    return new AppError("ALO_METAS_AUSENTES", { details });
   },
 
   semPermissao(details?: AppErrorDetails): AppError {

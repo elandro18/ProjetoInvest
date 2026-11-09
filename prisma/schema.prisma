@@ -110,6 +110,14 @@ enum StatusSaldo {
   @@map("status_saldo")
 }
 
+/// Escopo de uma meta de alocação (RN-021, DATA_MODEL.md §4.9).
+enum EscopoMeta {
+  CLASSE
+  SEGMENTO
+
+  @@map("escopo_meta")
+}
+
 /// Tipo do fato que altera posição, caixa ou rendimento (RN-014).
 enum TipoMovimentacao {
   COMPRA
@@ -150,6 +158,7 @@ model ClasseAtivo {
   ordem     Int             @default(0) @db.SmallInt
   segmentos SegmentoAtivo[]
   ativos    Ativo[]
+  metas     AlocacaoMeta[]
 
   @@map("classe_ativo")
 }
@@ -162,8 +171,9 @@ model SegmentoAtivo {
   nome     String      @db.VarChar(80)
   ativo    Boolean     @default(true)
   ordem    Int         @default(0) @db.SmallInt
-  classe   ClasseAtivo @relation(fields: [classeId], references: [id], onDelete: Restrict)
+  classe   ClasseAtivo   @relation(fields: [classeId], references: [id], onDelete: Restrict)
   ativos   Ativo[]
+  metas    AlocacaoMeta[]
 
   @@unique([classeId, codigo])
   @@index([classeId])
@@ -229,6 +239,7 @@ model Usuario {
   movimentacoes     Movimentacao[]
   posicoes          PosicaoAtivo[]
   rendimentos       Rendimento[]
+  metasAlocacao     AlocacaoMeta[]
 
   @@map("usuario")
 }
@@ -308,6 +319,29 @@ model InvestimentoRendaFixa {
   @@index([usuarioId, vencimento], map: "ix_rf_usuario_vencimento")
   @@index([usuarioId, instituicao], map: "ix_rf_usuario_instituicao")
   @@map("investimento_renda_fixa")
+}
+
+/// Meta de alocação estratégica versionada por vigência (RN-021, RN-022;
+/// DATA_MODEL.md §4.9). A soma de 100% por escopo é validada no domínio, dentro
+/// de transação — não é constraint de linha. Os CHECKs de referência exclusiva,
+/// faixa do percentual e vigência, além do índice único parcial de uma linha
+/// vigente por referência, são aplicados na migration (Prisma não os expressa).
+model AlocacaoMeta {
+  id             String         @id @default(uuid()) @db.Uuid
+  usuarioId      String         @map("usuario_id") @db.Uuid
+  escopo         EscopoMeta
+  classeId       String?        @map("classe_id") @db.Uuid
+  segmentoId     String?        @map("segmento_id") @db.Uuid
+  percentual     Decimal        @db.Decimal(9, 6)
+  vigenciaInicio DateTime       @map("vigencia_inicio") @db.Date
+  vigenciaFim    DateTime?      @map("vigencia_fim") @db.Date
+  criadoEm       DateTime       @default(now()) @map("criado_em") @db.Timestamptz(6)
+  usuario        Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  classe         ClasseAtivo?   @relation(fields: [classeId], references: [id], onDelete: Restrict)
+  segmento       SegmentoAtivo? @relation(fields: [segmentoId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId, escopo, vigenciaInicio(sort: Desc)], map: "ix_meta_usuario_escopo")
+  @@map("alocacao_meta")
 }
 
 /// Razão de fatos financeiros do titular (RN-014, DATA_MODEL.md §4.5).
