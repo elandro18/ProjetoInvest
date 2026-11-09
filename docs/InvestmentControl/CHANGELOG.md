@@ -304,3 +304,31 @@
 ### Removido
 
 - Nada.
+
+## 09/11/2026 — Carteira consolidada implementada (RN-020)
+
+### Implementado (código)
+
+- **RN-020-1** — agregador de carteira: patrimônio total, renda fixa, FIIs, percentuais por classe e segmento (base no total), quantidade de ativos, rendimentos do mês/ano e checagem de consistência (R$ 0,01).
+- **RN-020-2** — `GET /api/carteira` e `GET /api/carteira/evolucao` (dia/mês) com `.NET` de série a custo para FII e saldo constante para RF, validação de período e granularidade.
+- **RN-020-5** — campo aditivo `posicoes` na carteira (ticker, classe, segmento, quantidade, PM, custo, valor atual, `valorIndisponivel` e percentual).
+- **RN-020-3** — tela `/carteira` com cards de resumo, distribuição, tabela/cartões de posições, filtros de classe/segmento/status e aviso de inconsistência.
+- **RN-020-4** — 6 cenários E2E (consolidação, filtros, 360 px, evolução, isolamento A/B e performance) + teste de carga com 50 ativos e 500 movimentações.
+
+### Resultado das verificações
+
+- 722 testes unitários/integração + 48 E2E verdes.
+- Cobertura: 86,11% de linhas global; `src/modules/carteira` 99,5% linhas / 91,4% branches.
+- Performance da carteira com 50 ativos/500 movimentações: **p50 21–25 ms**, **p95 22–30 ms** (teto 500 ms local, 1.500 ms no CI).
+
+### Decisões e limitações
+
+- Sem cotação de mercado, FII entra pelo custo (`valorIndisponivel: true`) e RF pelo saldo; a evolução é a custo até existir `historico_preco` (RN-030/RN-033).
+- A série de RF usa o saldo atual como constante, porque não há histórico de saldo (RN-059).
+- `consistente: false` sinaliza soma das classes divergente do total e é registrado em log.
+- O filtro de status da tela usa `/api/ativos` (teto de 100 ativos) — limitação documentada.
+- O botão "Nova movimentação" na carteira não foi adicionado; o formulário vive em `/movimentacoes`.
+
+### Removido
+
+- Nada.
