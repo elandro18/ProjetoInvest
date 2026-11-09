@@ -126,3 +126,22 @@ Situação atual da DAG: `DATA_MODEL.md`, `ARCHITECTURE.md`, `API_CONTRACTS.md`,
 | `delivery/` (features e tasks) | 52 de 91 | 8 features da Fase 1 geradas; fases 2–5 ainda sem feature (fora do escopo aprovado) |
 
 > **Portão de cobertura (IMP-046):** o lote de 91 RNs está coberto pela camada de tradução técnica e as RNs da Fase 1 têm feature e tasks. Permanecem sem entrega apenas as RNs das fases 2–5, por decisão de escopo (RN-083), não por lacuna documental.
+
+---
+
+## Estado de implementação — Fase 1 (09/11/2026)
+
+| Feature | Tasks | Situação | Evidência |
+|---|---:|---|---|
+| RN-001 — Fundação técnica | 7 | ✅ exceto `RN-001-5` (deploy, sem credenciais) | 3 migrations base, CI com 2 jobs, audit com allowlist |
+| RN-085 — Conta e autenticação | 9 | ✅ | 2 migrations, 9 rotas, E2E de conta |
+| RN-010 — Cadastro de ativos | 7 | ✅ | migration `ativos`, 4 endpoints, E2E de ativos |
+| RN-014 — Movimentações e posição | 6 | ✅ | 2 migrations, G1–G7 verdes, E2E de movimentações |
+| RN-057 — Renda fixa | 5 | ✅ | migration `renda_fixa`, 4 endpoints, E2E de renda fixa |
+| RN-021 — Metas de alocação | 5 | ✅ | migration `alocacao_meta`, 3 endpoints, E2E de alocação |
+| RN-020 — Carteira consolidada | 5 | ✅ | 2 endpoints + `posicoes`, E2E com carga de 50×500 |
+| RN-061 — Dashboard | 5 | ✅ | endpoint agregado, 4 gráficos, E2E de dashboard |
+| **Total** | **49** | **48 concluídas, 1 pendente** | 763 testes · 52 E2E · cobertura 86,17% |
+
+> Implementação consolidada na branch `feature/fase-1` (26 commits, 320 arquivos). Não publicada: sem PR, merge ou deploy em 09/11/2026.
+> Pendências de produção em `delivery/HANDOVER_LOG.md` §5.

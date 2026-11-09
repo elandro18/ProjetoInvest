@@ -5,6 +5,9 @@
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
+  "overrides": {
+    "nodemailer": "^10.4.0"
+  },
   "engines": {
     "node": ">=22"
   },
@@ -29,7 +32,7 @@
     "decimal.js": "^10.6.0",
     "next": "^16.4.5",
     "next-auth": "5.0.0-beta.32",
-    "nodemailer": "^8.0.11",
+    "nodemailer": "^10.4.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "zod": "^4.6.7"

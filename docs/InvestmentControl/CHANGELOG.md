@@ -365,3 +365,32 @@
 ### Removido
 
 - Nada.
+
+## 09/11/2026 — Fase 1 consolidada
+
+### Alterado
+
+- Branch renomeada de `feature/rn-001-fundacao-tecnica` para **`feature/fase-1`**, refletindo o conteúdo (26 commits, 320 arquivos).
+- `nodemailer` 8.0.11 → **10.4.0** (via `overrides`), eliminando 15 advisories `high` do parser/SMTP. O gate de auditoria voltou a **1 aceite explícito** (`deepmerge-ts` via Prisma 6 — ADR-012).
+- `src/infra/auth/next-auth.d.ts`: augmentação do JWT movida para `next-auth/jwt`, compatível com a resolução atual de `@auth/core` (corrige os erros de tipo após a reinstalação).
+- `README.md`: estado da Fase 1, lista de features, rotas e próximo passo.
+- `delivery/fase-1/*.md`: as 8 features receberam a marca **✅ Implementado em 09/11/2026**.
+- `quality/TRACEABILITY.md`: seção "Estado de implementação — Fase 1" (49 tasks, 48 concluídas).
+- `delivery/HANDOVER_LOG.md`: criado com veredito, como rodar, decisões, dívidas e próximo passo.
+
+### Verificação final da consolidação
+
+- `npm run lint`, `npm run typecheck`, `npm run build`, `npm run audit` — verdes.
+- 763 testes unitários/integração + 52 E2E verdes.
+- Cobertura: 86,17% de linhas global (domínio ~100%).
+- `npm ci --dry-run` — OK.
+- Volume: 26 commits, 320 arquivos, 55.801 linhas adicionadas.
+
+### Pendências
+
+- **RN-001-5** (deploy Vercel + Neon), provedor de e-mail real e `/termos` + `/privacidade`.
+- Dívidas técnicas e decisões abertas listadas em `delivery/HANDOVER_LOG.md` §5.
+
+### Removido
+
+- Nada.

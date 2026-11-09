@@ -11,7 +11,7 @@ Aplicação web pessoal para controle de investimentos em FIIs e renda fixa: con
 
 | Camada | Tecnologia |
 |---|---|
-| Aplicação | Next.js 15 (App Router) + TypeScript |
+| Aplicação | Next.js 16 (App Router) + TypeScript |
 | Estilo | Tailwind CSS 4 |
 | Banco | PostgreSQL (Neon em produção) + Prisma |
 | Testes | Vitest (unitário/integração) + Playwright (E2E) |
@@ -102,7 +102,24 @@ docs/                 Documentação RDD (somente leitura para o código)
 
 ## Estado da entrega
 
-Fase 1 em andamento, começando pela fundação técnica (RN-001). As features e tasks estão em `docs/InvestmentControl/delivery/fase-1/`.
+**Fase 1 concluída** em 09/11/2026 — controle patrimonial completo em oito features:
+
+| Feature | Entrega |
+|---|---|
+| RN-001 | Fundação técnica (Next 16, Prisma, auth base, CI) |
+| RN-085 | Conta, login, verificação de e-mail, reset e encerramento |
+| RN-010 | Cadastro de ativos (FII e renda fixa) |
+| RN-014 | Movimentações e posição (preço médio) |
+| RN-057 | Renda fixa com alertas |
+| RN-021 | Metas de alocação e desvios |
+| RN-020 | Carteira consolidada e evolução |
+| RN-061 | Dashboard e painel de oportunidades |
+
+Rotas: `/login`, `/cadastro`, `/verificar-email`, `/esqueci-senha`, `/redefinir-senha`, `/dashboard`, `/carteira`, `/ativos`, `/movimentacoes`, `/renda-fixa`, `/alocacao`, `/conta`.
+
+Pendente para produção: deploy na Vercel + Neon (RN-001-5), provedor de e-mail real e as páginas legais `/termos` e `/privacidade`.
+
+A Fase 2 (planejamento de aportes: sugestão de distribuição, simulador e concentração) começa a partir de `docs/InvestmentControl/` — as features ainda serão geradas.
 
 ## Regras que o código respeita
 

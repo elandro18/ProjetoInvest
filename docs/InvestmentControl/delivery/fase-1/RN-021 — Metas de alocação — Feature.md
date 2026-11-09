@@ -10,6 +10,7 @@ status: draft
 > Gerado por rdd-doc em 07/11/2026. Edite para revisar.
 > Análise: ../../analysis/RN-021 — Metas de alocação/
 > Após revisão, use o workflow de issues para criar as tarefas no sistema de tracking.
+> **✅ Implementado em 09/11/2026** (Fase 1).
 
 ## Issue principal
 
