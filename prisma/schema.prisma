@@ -50,6 +50,15 @@ enum TipoTokenConta {
   @@map("tipo_token_conta")
 }
 
+/// Situação do ativo na carteira do titular (RN-013).
+enum StatusAtivo {
+  ATIVO
+  INATIVO
+  EM_ANALISE
+
+  @@map("status_ativo")
+}
+
 /// Documento legal versionado aceito no cadastro (RN-087).
 enum TipoAceiteLegal {
   TERMOS_USO
@@ -66,6 +75,7 @@ model ClasseAtivo {
   ativo     Boolean         @default(true)
   ordem     Int             @default(0) @db.SmallInt
   segmentos SegmentoAtivo[]
+  ativos    Ativo[]
 
   @@map("classe_ativo")
 }
@@ -79,6 +89,7 @@ model SegmentoAtivo {
   ativo    Boolean     @default(true)
   ordem    Int         @default(0) @db.SmallInt
   classe   ClasseAtivo @relation(fields: [classeId], references: [id], onDelete: Restrict)
+  ativos   Ativo[]
 
   @@unique([classeId, codigo])
   @@index([classeId])
@@ -139,6 +150,7 @@ model Usuario {
   excluidoEm        DateTime?     @map("excluido_em") @db.Timestamptz(6)
   tokens            TokenConta[]
   aceites           AceiteLegal[]
+  ativos            Ativo[]
 
   @@map("usuario")
 }
@@ -157,6 +169,35 @@ model TokenConta {
 
   @@index([usuarioId, tipo, criadoEm(sort: Desc)], map: "ix_token_usuario_tipo")
   @@map("token_conta")
+}
+
+/// Ativo cadastrado pelo titular (RN-010). `ux_ativo_usuario_ticker` garante
+/// unicidade por usuário; `chk_ativo_ticker_formato` é aplicado na migration
+/// (Prisma não expressa CHECK). A obrigatoriedade de segmento para FII depende
+/// de `classe_ativo.codigo` e é validada no domínio, não como CHECK simples.
+model Ativo {
+  id            String         @id @default(uuid()) @db.Uuid
+  usuarioId     String         @map("usuario_id") @db.Uuid
+  ticker        String         @db.VarChar(20)
+  nome          String         @db.VarChar(160)
+  classeId      String         @map("classe_id") @db.Uuid
+  segmentoId    String?        @map("segmento_id") @db.Uuid
+  cnpj          String?        @db.VarChar(14)
+  administrador String?        @db.VarChar(160)
+  gestor        String?        @db.VarChar(160)
+  status        StatusAtivo    @default(ATIVO)
+  fonteDados    String?        @map("fonte_dados") @db.VarChar(60)
+  observacoes   String?        @db.Text
+  criadoEm      DateTime       @default(now()) @map("criado_em") @db.Timestamptz(6)
+  atualizadoEm  DateTime       @default(now()) @map("atualizado_em") @db.Timestamptz(6)
+  usuario       Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  classe        ClasseAtivo    @relation(fields: [classeId], references: [id], onDelete: Restrict)
+  segmento      SegmentoAtivo? @relation(fields: [segmentoId], references: [id], onDelete: Restrict)
+
+  @@unique([usuarioId, ticker], map: "ux_ativo_usuario_ticker")
+  @@index([usuarioId, status], map: "ix_ativo_usuario_status")
+  @@index([segmentoId], map: "ix_ativo_segmento")
+  @@map("ativo")
 }
 
 /// Evidência de consentimento legal versionado (RN-087). Nunca guarda IP puro.

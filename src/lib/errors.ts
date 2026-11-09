@@ -24,6 +24,14 @@ export type AppErrorCode =
   | "AUTH_TOKEN_EXPIRADO"
   | "AUTH_TOKEN_JA_USADO"
   | "CONTA_EXCLUSAO_BLOQUEADA"
+  | "ATIVO_NAO_ENCONTRADO"
+  | "ATIVO_TICKER_DUPLICADO"
+  | "ATIVO_TICKER_INVALIDO"
+  | "ATIVO_SEGMENTO_OBRIGATORIO"
+  | "ATIVO_SEGMENTO_INVALIDO"
+  | "ATIVO_CLASSE_INVALIDA"
+  | "ATIVO_CNPJ_INVALIDO"
+  | "ATIVO_CLASSE_IMUTAVEL"
   | "SEM_PERMISSAO"
   | "RECURSO_NAO_ENCONTRADO"
   | "RATE_LIMIT_EXCEDIDO"
@@ -87,6 +95,32 @@ export const ERROR_CATALOG: Readonly<Record<AppErrorCode, ErrorCatalogEntry>> = 
   CONTA_EXCLUSAO_BLOQUEADA: {
     status: 409,
     message: "Não é possível encerrar a conta agora.",
+  },
+  ATIVO_NAO_ENCONTRADO: { status: 404, message: "Ativo não encontrado." },
+  ATIVO_TICKER_DUPLICADO: {
+    status: 409,
+    message: "Já existe um ativo com este ticker.",
+  },
+  ATIVO_TICKER_INVALIDO: {
+    status: 422,
+    message: "Ticker inválido. Use de 4 a 20 caracteres alfanuméricos.",
+  },
+  ATIVO_SEGMENTO_OBRIGATORIO: {
+    status: 422,
+    message: "Informe o segmento para um FII.",
+  },
+  ATIVO_SEGMENTO_INVALIDO: {
+    status: 422,
+    message: "Segmento não pertence à classe informada.",
+  },
+  ATIVO_CLASSE_INVALIDA: {
+    status: 422,
+    message: "Classe de ativo inválida ou inativa.",
+  },
+  ATIVO_CNPJ_INVALIDO: { status: 422, message: "CNPJ inválido." },
+  ATIVO_CLASSE_IMUTAVEL: {
+    status: 422,
+    message: "A classe não pode ser alterada após movimentações.",
   },
   SEM_PERMISSAO: { status: 403, message: "Você não tem permissão para esta operação." },
   RECURSO_NAO_ENCONTRADO: { status: 404, message: "Recurso não encontrado." },
@@ -221,6 +255,38 @@ export const errors = {
 
   contaExclusaoBloqueada(details?: AppErrorDetails): AppError {
     return new AppError("CONTA_EXCLUSAO_BLOQUEADA", { details });
+  },
+
+  ativoNaoEncontrado(details?: AppErrorDetails): AppError {
+    return new AppError("ATIVO_NAO_ENCONTRADO", { details });
+  },
+
+  ativoTickerDuplicado(details?: AppErrorDetails): AppError {
+    return new AppError("ATIVO_TICKER_DUPLICADO", { details });
+  },
+
+  ativoTickerInvalido(details?: AppErrorDetails): AppError {
+    return new AppError("ATIVO_TICKER_INVALIDO", { details });
+  },
+
+  ativoSegmentoObrigatorio(details?: AppErrorDetails): AppError {
+    return new AppError("ATIVO_SEGMENTO_OBRIGATORIO", { details });
+  },
+
+  ativoSegmentoInvalido(details?: AppErrorDetails): AppError {
+    return new AppError("ATIVO_SEGMENTO_INVALIDO", { details });
+  },
+
+  ativoClasseInvalida(details?: AppErrorDetails): AppError {
+    return new AppError("ATIVO_CLASSE_INVALIDA", { details });
+  },
+
+  ativoCnpjInvalido(details?: AppErrorDetails): AppError {
+    return new AppError("ATIVO_CNPJ_INVALIDO", { details });
+  },
+
+  ativoClasseImutavel(details?: AppErrorDetails): AppError {
+    return new AppError("ATIVO_CLASSE_IMUTAVEL", { details });
   },
 
   semPermissao(details?: AppErrorDetails): AppError {
