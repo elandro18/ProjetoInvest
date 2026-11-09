@@ -14,13 +14,14 @@ import {
 const logSilencioso = { info: () => undefined, error: () => undefined };
 
 /**
- * Prepara o E2E de ativos (RN-010, AC-070).
+ * Prepara o E2E de ativos, renda fixa, movimentações e alocação
+ * (RN-010, RN-021, AC-070).
  *
  * - Garante o catálogo de classes/segmentos (o CI não roda o seed);
- * - cria **dois** titulares ativados (A e B) no Postgres, com o mesmo
+ * - cria **três** titulares ativados (A, B e C) no Postgres, com o mesmo
  *   `hashSenha` (Argon2id) do runtime, para o fluxo de cadastro e para o
  *   isolamento entre usuários;
- * - grava a fixture com os dois. Falha de banco não derruba a suíte: grava
+ * - grava a fixture com os três. Falha de banco não derruba a suíte: grava
  *   `disponivel: false` e os testes dependentes são pulados.
  */
 export default async function globalSetup(): Promise<void> {
@@ -47,7 +48,11 @@ export default async function globalSetup(): Promise<void> {
         select: { id: true },
       });
 
-    const [a, b] = await prisma.$transaction([criar("a"), criar("b")]);
+    const [a, b, c] = await prisma.$transaction([
+      criar("a"),
+      criar("b"),
+      criar("c"),
+    ]);
 
     gravarRegistro({
       disponivel: true,
@@ -62,6 +67,12 @@ export default async function globalSetup(): Promise<void> {
           id: b.id,
           nome: nomeUsuarioE2E("b"),
           email: emailUsuarioE2E("b", agora),
+          senha: SENHA_USUARIO_E2E,
+        },
+        c: {
+          id: c.id,
+          nome: nomeUsuarioE2E("c"),
+          email: emailUsuarioE2E("c", agora),
           senha: SENHA_USUARIO_E2E,
         },
       },

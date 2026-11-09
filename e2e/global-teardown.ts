@@ -6,16 +6,17 @@ import { apagarRegistro, lerRegistro } from "./usuario-e2e";
 const logSilencioso = { info: () => undefined, error: () => undefined };
 
 /**
- * Limpa o E2E de ativos, renda fixa, movimentações e posições (RN-010, RN-014,
- * RN-057, AC-070).
+ * Limpa o E2E de ativos, renda fixa, movimentações, posições e metas de
+ * alocação (RN-010, RN-014, RN-021, RN-057, AC-070).
  *
  * As FKs são `ON DELETE RESTRICT`, então a ordem importa:
  * `rendimento` → `movimentacao` → `posicao_ativo` → `ativo` →
- * `investimento_renda_fixa` → `usuario`. Antes de apagar o razão, a referência
- * `posicao_ativo.ultima_movimentacao_id` é desvinculada (também RESTRICT); o
- * cache derivado é removido logo depois do razão que ele referencia. Tokens e
- * aceites caem por cascade. Nada é apagado em massa — só os ids registrados na
- * fixture. As contagens finais são impressas como evidência de banco limpo.
+ * `investimento_renda_fixa` → `alocacao_meta` → `usuario`. Antes de apagar o
+ * razão, a referência `posicao_ativo.ultima_movimentacao_id` é desvinculada
+ * (também RESTRICT); o cache derivado é removido logo depois do razão que ele
+ * referencia. Tokens e aceites caem por cascade. Nada é apagado em massa — só
+ * os ids registrados na fixture. As contagens finais são impressas como
+ * evidência de banco limpo.
  */
 export default async function globalTeardown(): Promise<void> {
   const registro = lerRegistro();
@@ -27,7 +28,11 @@ export default async function globalTeardown(): Promise<void> {
     try {
       await prisma.$connect();
 
-      const ids = [registro.usuarios.a.id, registro.usuarios.b.id];
+      const ids = [
+        registro.usuarios.a.id,
+        registro.usuarios.b.id,
+        registro.usuarios.c.id,
+      ];
       const dono = { usuarioId: { in: ids } };
 
       const rendimentos = await prisma.rendimento.deleteMany({ where: dono });
@@ -42,6 +47,7 @@ export default async function globalTeardown(): Promise<void> {
       const posicoes = await prisma.posicaoAtivo.deleteMany({ where: dono });
       const ativos = await prisma.ativo.deleteMany({ where: dono });
       const rendaFixa = await prisma.investimentoRendaFixa.deleteMany({ where: dono });
+      const metas = await prisma.alocacaoMeta.deleteMany({ where: dono });
       const usuarios = await prisma.usuario.deleteMany({ where: { id: { in: ids } } });
 
       const restantes = await Promise.all([
@@ -50,6 +56,7 @@ export default async function globalTeardown(): Promise<void> {
         prisma.posicaoAtivo.count(),
         prisma.ativo.count(),
         prisma.investimentoRendaFixa.count(),
+        prisma.alocacaoMeta.count(),
         prisma.usuario.count(),
       ]);
 
@@ -59,6 +66,7 @@ export default async function globalTeardown(): Promise<void> {
         prisma.posicaoAtivo.count({ where: dono }),
         prisma.ativo.count({ where: dono }),
         prisma.investimentoRendaFixa.count({ where: dono }),
+        prisma.alocacaoMeta.count({ where: dono }),
         prisma.usuario.count({ where: { id: { in: ids } } }),
       ]);
 
@@ -66,16 +74,19 @@ export default async function globalTeardown(): Promise<void> {
         throw new Error(
           `dados de teste remanescentes (rendimentos: ${sobraram[0]}, ` +
             `movimentações: ${sobraram[1]}, posições: ${sobraram[2]}, ` +
-            `ativos: ${sobraram[3]}, renda fixa: ${sobraram[4]}, usuários: ${sobraram[5]})`,
+            `ativos: ${sobraram[3]}, renda fixa: ${sobraram[4]}, ` +
+            `metas de alocação: ${sobraram[5]}, usuários: ${sobraram[6]})`,
         );
       }
 
       process.stdout.write(
         `[e2e] Limpeza: ${rendimentos.count} rendimento(s), ${movimentacoes.count} movimentação(ões), ` +
-          `${posicoes.count} posição(ões), ${ativos.count} ativo(s), ${rendaFixa.count} título(s) de renda fixa ` +
-          `e ${usuarios.count} usuário(s) de teste removidos; restam ${restantes[0]} rendimento(s), ` +
-          `${restantes[1]} movimentação(ões), ${restantes[2]} posição(ões), ${restantes[3]} ativo(s), ` +
-          `${restantes[4]} título(s) de renda fixa e ${restantes[5]} usuário(s).\n`,
+          `${posicoes.count} posição(ões), ${ativos.count} ativo(s), ${rendaFixa.count} título(s) de renda fixa, ` +
+          `${metas.count} meta(s) de alocação e ${usuarios.count} usuário(s) de teste removidos; ` +
+          `restam ${restantes[0]} rendimento(s), ${restantes[1]} movimentação(ões), ` +
+          `${restantes[2]} posição(ões), ${restantes[3]} ativo(s), ` +
+          `${restantes[4]} título(s) de renda fixa, ${restantes[5]} meta(s) de alocação e ` +
+          `${restantes[6]} usuário(s).\n`,
       );
     } catch (erro) {
       const motivo = erro instanceof Error ? erro.message : String(erro);

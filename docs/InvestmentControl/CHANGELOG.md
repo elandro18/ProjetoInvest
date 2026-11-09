@@ -273,3 +273,34 @@
 ### Removido
 
 - Nada.
+
+## 09/11/2026 — Metas de alocação implementadas (RN-021)
+
+### Implementado (código)
+
+- **RN-021-1** — tabela `alocacao_meta` com vigência e índices únicos parciais que garantem uma única configuração vigente por referência; defaults por usuário aplicados no primeiro acesso.
+- **RN-021-2** — `GET/PUT /api/alocacao/metas` com validação de soma exata (100), referências ativas, histórico e encerramento da vigência anterior em transação.
+- **RN-021-3** — `GET /api/alocacao/desvios` com base no patrimônio total (RN-089), tolerância de 0,5 p.p. (RN-090), valor para meta e marcação de custo quando não há cotação (RN-091). Port `ValorCarteira` isolado para reuso pela RN-020.
+- **RN-021-4** — tela `/alocacao` com dois blocos de metas, soma em tempo real, confirmação de substituição e tabela de desvios.
+- **RN-021-5** — 8 cenários E2E (defaults, vigência, somas inválidas, desvios com FII/RF, sem patrimônio, 360 px e isolamento A/B).
+
+### Resultado das verificações
+
+- 676 testes unitários/integração + 42 E2E verdes.
+- Cobertura: 85,1% de linhas global; `src/modules/alocacao` 97,8% linhas / 90,6% branches.
+- `lint`, `typecheck`, `build` verdes.
+
+### Decisões
+
+- Defaults de meta são **por usuário e lazy** (não há seed global possível), criados no primeiro `GET`.
+- A meta da especificação que agrupa "Renda Urbana e Híbridos" em 15% foi dividida em **7,5 / 7,5**, porque são segmentos distintos no modelo.
+- Vigência usa **índices únicos parciais** (`WHERE vigencia_fim IS NULL`) em vez de unicidade por data, garantindo uma única configuração vigente mesmo com duas substituições no mesmo dia.
+
+### Pendências
+
+- `GET /api/alocacao/desvios` antes de `GET /api/alocacao/metas` retorna 409 `ALO_METAS_AUSENTES` (defaults são lazy); a UI foi sequenciada para evitar o caso. Tornar o endpoint autossuficiente é candidato a CR.
+- O campo `historico` agrupa substituições feitas no mesmo dia; as linhas ficam no banco, mas o período exibido colapsa.
+
+### Removido
+
+- Nada.

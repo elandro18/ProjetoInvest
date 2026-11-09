@@ -4,12 +4,17 @@ import path from "node:path";
 /**
  * Titulares de teste do E2E.
  *
- * Dois usuários ativados são criados no `globalSetup` (diretamente no Postgres,
+ * Três usuários ativados são criados no `globalSetup` (diretamente no Postgres,
  * com o mesmo hash Argon2id do runtime) e expostos neste arquivo de fixture:
  *
- * - **A** — dono da carteira usada pelo fluxo de ativos (RN-010);
+ * - **A** — dono da carteira usada pelos fluxos de ativos (RN-010) e alocação
+ *   (RN-021-5); também guarda as metas editadas;
  * - **B** — usado para provar o isolamento entre titulares (AC-070): não pode
- *   ler nem alterar ativo de A e não o vê na própria listagem.
+ *   ler nem alterar ativo de A e não o vê na própria listagem. Na alocação é
+ *   o titular sem patrimônio e com as metas default;
+ * - **C** — carteira controlada só da alocação (RN-021-5), para conferir os
+ *   desvios com FII pelo custo e renda fixa pelo saldo sem interferir nas
+ *   carteiras de A/B que os outros specs assumem vazias.
  *
  * O `globalTeardown` apaga os ativos e depois as contas (a FK de `ativo` é
  * `ON DELETE RESTRICT`). Quando o banco não estiver disponível (ex.: job de
@@ -17,7 +22,7 @@ import path from "node:path";
  * dependentes são ignorados.
  */
 
-export type ChaveUsuarioE2E = "a" | "b";
+export type ChaveUsuarioE2E = "a" | "b" | "c";
 
 export const SENHA_USUARIO_E2E = "SenhaE2E!2026";
 
@@ -37,6 +42,7 @@ export interface UsuarioE2E {
 export interface UsuariosE2E {
   readonly a: UsuarioE2E;
   readonly b: UsuarioE2E;
+  readonly c: UsuarioE2E;
 }
 
 export type RegistroUsuarioE2E =
@@ -45,7 +51,10 @@ export type RegistroUsuarioE2E =
 
 /** Nome fictício por titular — nenhum dado real é usado. */
 export function nomeUsuarioE2E(chave: ChaveUsuarioE2E): string {
-  return chave === "a" ? "Titular E2E A" : "Titular E2E B";
+  if (chave === "a") {
+    return "Titular E2E A";
+  }
+  return chave === "b" ? "Titular E2E B" : "Titular E2E C";
 }
 
 /** E-mail fictício e único por execução/chave — evita colisão no índice funcional. */
@@ -88,9 +97,14 @@ export function lerRegistro(): RegistroUsuarioE2E {
       };
     }
 
-    const usuarios = dados.usuarios as { a?: unknown; b?: unknown } | undefined;
-    if (usuarios !== undefined && ehUsuarioValido(usuarios.a) && ehUsuarioValido(usuarios.b)) {
-      return { disponivel: true, usuarios: { a: usuarios.a, b: usuarios.b } };
+    const usuarios = dados.usuarios as { a?: unknown; b?: unknown; c?: unknown } | undefined;
+    if (
+      usuarios !== undefined &&
+      ehUsuarioValido(usuarios.a) &&
+      ehUsuarioValido(usuarios.b) &&
+      ehUsuarioValido(usuarios.c)
+    ) {
+      return { disponivel: true, usuarios: { a: usuarios.a, b: usuarios.b, c: usuarios.c } };
     }
 
     return { disponivel: false, motivo: "arquivo de fixture com formato inválido" };
