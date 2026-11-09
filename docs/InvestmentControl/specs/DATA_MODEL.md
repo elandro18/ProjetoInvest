@@ -197,6 +197,8 @@ erDiagram
 
 > **Regra:** `posicao_ativo` é tabela derivada (cache de leitura). Pode ser reconstruída integralmente a partir de `movimentacao`. Nunca é fonte primária (RN-015).
 
+> **Exceção de posição negativa (RN-018):** uma venda confirmada acima da posição é registrada e auditada, mas o cache não pode armazenar quantidade negativa (CHECK `>= 0`). Nesse caso a linha de cache é removida e a posição derivada passa a ser calculada do razão (podendo ser negativa) até que uma nova entrada a torne não negativa.
+
 ### 4.7 `rendimento`
 
 | Coluna | Tipo | Restrições | Descrição |

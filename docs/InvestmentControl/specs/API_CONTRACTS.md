@@ -236,7 +236,7 @@ Retorna os catálogos usados pelos formulários e pelas metas de alocação.
 
 ### 4.1 `GET /api/movimentacoes`
 
-**Query:** `ativoId`, `tipo`, `de`, `ate`, `incluirCanceladas` (default `false`), `page`, `pageSize`, `sort` (`data|valorTotal`).
+**Query:** `ativoId`, `tipo`, `de`, `ate`, `incluirCanceladas` (default `false`), `page`, `pageSize`, `sort` (`data|valorTotal|criadoEm`) + `order`.
 
 **200**
 
@@ -285,6 +285,8 @@ Retorna os catálogos usados pelos formulários e pelas metas de alocação.
   "posicao": { "quantidade": "110.00000000", "precoMedio": "161.400000", "custoTotal": "17754.00" }
 }
 ```
+
+> Em uma venda confirmada que deixa a posição negativa, `posicao.quantidade` na resposta é negativa e o cache `posicao_ativo` é removido (RN-018 + exceção documentada em `DATA_MODEL.md` §4.6).
 
 **Erros:** `MOV_POSICAO_NEGATIVA` (409, com `details.requerConfirmacao`), `MOV_VALOR_INCONSISTENTE` (422), `MOV_DATA_FUTURA` (422), `MOV_ATIVO_INATIVO` (422), `MOV_TIPO_INVALIDO` (422).
 

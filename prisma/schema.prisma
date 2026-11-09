@@ -110,6 +110,37 @@ enum StatusSaldo {
   @@map("status_saldo")
 }
 
+/// Tipo do fato que altera posição, caixa ou rendimento (RN-014).
+enum TipoMovimentacao {
+  COMPRA
+  VENDA
+  DIVIDENDO
+  JUROS
+  APLICACAO_RF
+  RESGATE_RF
+  TAXA
+
+  @@map("tipo_movimentacao")
+}
+
+/// Natureza do provento recebido (RN-017).
+enum TipoRendimento {
+  DIVIDENDO
+  JURO
+  AMORTIZACAO
+
+  @@map("tipo_rendimento")
+}
+
+/// Proveniência do dado (RN-014, RN-030).
+enum OrigemDado {
+  MANUAL
+  PROVEDOR
+  IMPORTACAO_CVM
+
+  @@map("origem_dado")
+}
+
 /// Catálogo de classes de ativo (RENDA_FIXA, FII). Dado de referência, não do usuário.
 model ClasseAtivo {
   id        String          @id @default(uuid()) @db.Uuid
@@ -195,6 +226,9 @@ model Usuario {
   aceites           AceiteLegal[]
   ativos            Ativo[]
   rendaFixa         InvestimentoRendaFixa[]
+  movimentacoes     Movimentacao[]
+  posicoes          PosicaoAtivo[]
+  rendimentos       Rendimento[]
 
   @@map("usuario")
 }
@@ -237,6 +271,9 @@ model Ativo {
   usuario       Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
   classe        ClasseAtivo    @relation(fields: [classeId], references: [id], onDelete: Restrict)
   segmento      SegmentoAtivo? @relation(fields: [segmentoId], references: [id], onDelete: Restrict)
+  movimentacoes Movimentacao[]
+  posicoes      PosicaoAtivo[]
+  rendimentos   Rendimento[]
 
   @@unique([usuarioId, ticker], map: "ux_ativo_usuario_ticker")
   @@index([usuarioId, status], map: "ix_ativo_usuario_status")
@@ -271,6 +308,73 @@ model InvestimentoRendaFixa {
   @@index([usuarioId, vencimento], map: "ix_rf_usuario_vencimento")
   @@index([usuarioId, instituicao], map: "ix_rf_usuario_instituicao")
   @@map("investimento_renda_fixa")
+}
+
+/// Razão de fatos financeiros do titular (RN-014, DATA_MODEL.md §4.5).
+/// Os CHECKs de quantidade/valor e o índice único parcial de idempotência são
+/// aplicados na migration (Prisma não expressa CHECK nem índice parcial).
+model Movimentacao {
+  id                 String           @id @default(uuid()) @db.Uuid
+  usuarioId          String           @map("usuario_id") @db.Uuid
+  ativoId            String           @map("ativo_id") @db.Uuid
+  tipo               TipoMovimentacao
+  data               DateTime         @db.Date
+  quantidade         Decimal?         @db.Decimal(18, 8)
+  valorUnitario      Decimal?         @map("valor_unitario") @db.Decimal(18, 2)
+  valorTotal         Decimal          @map("valor_total") @db.Decimal(18, 2)
+  custos             Decimal          @default(0) @db.Decimal(18, 2)
+  observacoes        String?          @db.Text
+  canceladaEm        DateTime?        @map("cancelada_em") @db.Timestamptz(6)
+  cancelamentoMotivo String?          @map("cancelamento_motivo") @db.Text
+  idempotencyKey     String?          @map("idempotency_key") @db.VarChar(64)
+  criadoEm           DateTime         @default(now()) @map("criado_em") @db.Timestamptz(6)
+  usuario            Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  ativo              Ativo            @relation(fields: [ativoId], references: [id], onDelete: Restrict)
+  rendimentos        Rendimento[]
+  posicoes           PosicaoAtivo[]   @relation("UltimaMovimentacao")
+
+  @@index([usuarioId, data(sort: Desc)], map: "ix_mov_usuario_data")
+  @@index([ativoId, data], map: "ix_mov_ativo_data")
+  @@map("movimentacao")
+}
+
+/// Cache derivado da posição por ativo (RN-015, DATA_MODEL.md §4.6).
+/// Reconstruível a partir de `movimentacao`; nunca é fonte primária.
+model PosicaoAtivo {
+  usuarioId            String        @map("usuario_id") @db.Uuid
+  ativoId              String        @map("ativo_id") @db.Uuid
+  quantidade           Decimal       @db.Decimal(18, 8)
+  precoMedio           Decimal       @map("preco_medio") @db.Decimal(18, 6)
+  custoTotal           Decimal       @map("custo_total") @db.Decimal(18, 2)
+  ultimaMovimentacaoId String?       @map("ultima_movimentacao_id") @db.Uuid
+  atualizadoEm         DateTime      @default(now()) @map("atualizado_em") @db.Timestamptz(6)
+  usuario              Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  ativo                Ativo         @relation(fields: [ativoId], references: [id], onDelete: Restrict)
+  ultimaMovimentacao   Movimentacao? @relation("UltimaMovimentacao", fields: [ultimaMovimentacaoId], references: [id], onDelete: Restrict)
+
+  @@id([usuarioId, ativoId])
+  @@map("posicao_ativo")
+}
+
+/// Provento recebido, separado do resultado de capital (RN-017, DATA_MODEL.md §4.7).
+model Rendimento {
+  id             String          @id @default(uuid()) @db.Uuid
+  usuarioId      String          @map("usuario_id") @db.Uuid
+  ativoId        String          @map("ativo_id") @db.Uuid
+  tipo           TipoRendimento
+  dataPagamento  DateTime        @map("data_pagamento") @db.Date
+  competencia    String?         @db.Char(7)
+  valor          Decimal         @db.Decimal(18, 2)
+  origem         OrigemDado
+  movimentacaoId String?         @map("movimentacao_id") @db.Uuid
+  criadoEm       DateTime        @default(now()) @map("criado_em") @db.Timestamptz(6)
+  usuario        Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  ativo          Ativo           @relation(fields: [ativoId], references: [id], onDelete: Restrict)
+  movimentacao   Movimentacao?   @relation(fields: [movimentacaoId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId, dataPagamento], map: "ix_rend_usuario_data")
+  @@index([ativoId, competencia], map: "ix_rend_ativo_competencia")
+  @@map("rendimento")
 }
 
 /// Evidência de consentimento legal versionado (RN-087). Nunca guarda IP puro.

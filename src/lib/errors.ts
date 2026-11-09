@@ -32,6 +32,15 @@ export type AppErrorCode =
   | "ATIVO_CLASSE_INVALIDA"
   | "ATIVO_CNPJ_INVALIDO"
   | "ATIVO_CLASSE_IMUTAVEL"
+  | "MOV_NAO_ENCONTRADA"
+  | "MOV_POSICAO_NEGATIVA"
+  | "MOV_VALOR_INCONSISTENTE"
+  | "MOV_DATA_FUTURA"
+  | "MOV_ATIVO_INATIVO"
+  | "MOV_TIPO_INVALIDO"
+  | "MOV_QTD_OBRIGATORIA"
+  | "MOV_JA_CANCELADA"
+  | "MOV_CANCELAMENTO_SEM_MOTIVO"
   | "RF_NAO_ENCONTRADA"
   | "RF_VENCIMENTO_INVALIDO"
   | "RF_TAXA_INVALIDA"
@@ -126,6 +135,30 @@ export const ERROR_CATALOG: Readonly<Record<AppErrorCode, ErrorCatalogEntry>> = 
   ATIVO_CLASSE_IMUTAVEL: {
     status: 422,
     message: "A classe não pode ser alterada após movimentações.",
+  },
+  MOV_NAO_ENCONTRADA: { status: 404, message: "Movimentação não encontrada." },
+  MOV_POSICAO_NEGATIVA: {
+    status: 409,
+    message: "A movimentação deixaria a posição negativa.",
+  },
+  MOV_VALOR_INCONSISTENTE: {
+    status: 422,
+    message: "O valor total não confere com quantidade × valor unitário + custos.",
+  },
+  MOV_DATA_FUTURA: { status: 422, message: "A data não pode ser superior a amanhã." },
+  MOV_ATIVO_INATIVO: {
+    status: 422,
+    message: "Ativo inativo não aceita nova movimentação.",
+  },
+  MOV_TIPO_INVALIDO: {
+    status: 422,
+    message: "Tipo de movimentação inválido para o ativo.",
+  },
+  MOV_QTD_OBRIGATORIA: { status: 422, message: "Informe quantidade e valor unitário." },
+  MOV_JA_CANCELADA: { status: 409, message: "Movimentação já cancelada." },
+  MOV_CANCELAMENTO_SEM_MOTIVO: {
+    status: 422,
+    message: "Informe o motivo do cancelamento.",
   },
   RF_NAO_ENCONTRADA: { status: 404, message: "Investimento não encontrado." },
   RF_VENCIMENTO_INVALIDO: {
@@ -303,6 +336,42 @@ export const errors = {
 
   ativoClasseImutavel(details?: AppErrorDetails): AppError {
     return new AppError("ATIVO_CLASSE_IMUTAVEL", { details });
+  },
+
+  movNaoEncontrada(details?: AppErrorDetails): AppError {
+    return new AppError("MOV_NAO_ENCONTRADA", { details });
+  },
+
+  movPosicaoNegativa(details?: AppErrorDetails): AppError {
+    return new AppError("MOV_POSICAO_NEGATIVA", { details });
+  },
+
+  movValorInconsistente(details?: AppErrorDetails): AppError {
+    return new AppError("MOV_VALOR_INCONSISTENTE", { details });
+  },
+
+  movDataFutura(details?: AppErrorDetails): AppError {
+    return new AppError("MOV_DATA_FUTURA", { details });
+  },
+
+  movAtivoInativo(details?: AppErrorDetails): AppError {
+    return new AppError("MOV_ATIVO_INATIVO", { details });
+  },
+
+  movTipoInvalido(details?: AppErrorDetails): AppError {
+    return new AppError("MOV_TIPO_INVALIDO", { details });
+  },
+
+  movQtdObrigatoria(details?: AppErrorDetails): AppError {
+    return new AppError("MOV_QTD_OBRIGATORIA", { details });
+  },
+
+  movJaCancelada(details?: AppErrorDetails): AppError {
+    return new AppError("MOV_JA_CANCELADA", { details });
+  },
+
+  movCancelamentoSemMotivo(details?: AppErrorDetails): AppError {
+    return new AppError("MOV_CANCELAMENTO_SEM_MOTIVO", { details });
   },
 
   rfNaoEncontrada(details?: AppErrorDetails): AppError {

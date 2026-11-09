@@ -214,6 +214,36 @@
 
 - Nada.
 
+## 09/11/2026 — Movimentações e posição: banco, domínio e API (RN-014)
+
+### Implementado (código)
+
+- **RN-014-1** — tabelas `movimentacao`, `posicao_ativo` e `rendimento`, com enums, CHECKs, índice parcial de idempotência e FKs.
+- **RN-014-2** — domínio puro de posição: compra, venda com baixa proporcional, reconstrução ordenada por `(data, criadoEm)`, validação de total (tolerância R$ 0,01) e estratégia de baixa isolada (custo médio).
+- **RN-014-3** — `POST /api/movimentacoes` transacional com idempotência, criação de rendimento em dividendo/juros, confirmação explícita de posição negativa (auditada) e rejeição de `APLICACAO_RF`/`RESGATE_RF` até `PEND-017`.
+- **RN-014-4** — `GET /api/movimentacoes` (filtros, paginação, `sort`) e cancelamento lógico com recálculo da posição.
+
+### Resultado das verificações
+
+- Casos de ouro G1–G7 e G14 verdes.
+- 622 testes; cobertura global 85,69% e módulo de domínio acima do gate.
+- `lint`, `typecheck`, `build` verdes.
+
+### Documentação corrigida após divergência reportada
+
+- `REQUIREMENTS.md`: criada `PEND-017` (vínculo das movimentações de renda fixa com `investimento_renda_fixa`).
+- `specs/DATA_MODEL.md` §4.6: documentada a exceção de posição negativa — cache não armazena quantidade negativa, a linha é removida e a posição é derivada do razão.
+- `specs/API_CONTRACTS.md` §4.1/§4.2: `sort=criadoEm` e comportamento da posição negativa na resposta.
+
+### Pendências
+
+- Concorrência: duas criações simultâneas do mesmo ativo podem recalcular sobre o mesmo snapshot; avaliar lock por `(usuario_id, ativo_id)` quando houver carga.
+- Telas (RN-014-5) e E2E (RN-014-6) pendentes.
+
+### Removido
+
+- Nada.
+
 ## 09/11/2026 — Renda fixa implementada (RN-057)
 
 ### Implementado (código)

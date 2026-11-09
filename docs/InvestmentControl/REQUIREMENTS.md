@@ -583,6 +583,7 @@ Regras de auditoria:
 - **PEND-014** (07/11/2026) — Política de retenção de `log_integracao` e de dados históricos.
 - **PEND-015** (07/11/2026) — Necessidade de exportação de carteira (CSV/JSON/PDF) não foi especificada; confirmar se entra na Fase 1.
 - **PEND-016** (07/11/2026) — Designação do encarregado (DPO) e publicação do canal de comunicação com titulares, exigidos pelo art. 41 da LGPD. Bloqueia o go-live conforme `specs/COMPLIANCE.md` §6.
+- **PEND-017** (09/11/2026) — Vínculo entre movimentações de renda fixa (`APLICACAO_RF`/`RESGATE_RF`) e `investimento_renda_fixa`: o modelo atual exige `ativo_id`, mas a renda fixa não é um ativo de carteira. Até a definição, a API rejeita esses dois tipos com orientação para usar o cadastro de renda fixa.
 
 ---
 
