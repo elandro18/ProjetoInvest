@@ -73,7 +73,7 @@ describe("LoginForm", () => {
     expect(navegacao.refresh).toHaveBeenCalled();
   });
 
-  it("usa /conta quando não há callbackUrl", async () => {
+  it("usa /dashboard quando não há callbackUrl", async () => {
     apiRequestMock.mockResolvedValue({
       ok: true,
       status: 200,
@@ -95,7 +95,7 @@ describe("LoginForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
 
     await waitFor(() => {
-      expect(navegacao.push).toHaveBeenCalledWith("/conta");
+      expect(navegacao.push).toHaveBeenCalledWith("/dashboard");
     });
   });
 });

@@ -23,6 +23,7 @@ export function PrivateHeader({ nome }: PrivateHeaderProps) {
   const [saindo, setSaindo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  const dashboardAtivo = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   const carteiraAtivo = pathname === "/carteira" || pathname.startsWith("/carteira/");
   const ativosAtivo = pathname === "/ativos" || pathname.startsWith("/ativos/");
   const movimentacoesAtivo =
@@ -51,7 +52,7 @@ export function PrivateHeader({ nome }: PrivateHeaderProps) {
   return (
     <header className="border-b border-neutral-200 bg-neutral-0">
       <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link href="/conta" className="flex items-center gap-2 rounded-lg text-neutral-900">
+        <Link href="/dashboard" className="flex items-center gap-2 rounded-lg text-neutral-900">
           <span
             aria-hidden="true"
             className="flex size-8 items-center justify-center rounded-lg bg-neutral-900 text-xs font-semibold text-neutral-0"
@@ -66,6 +67,18 @@ export function PrivateHeader({ nome }: PrivateHeaderProps) {
             {nome}
           </span>
           <nav aria-label="Navegação principal" className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/dashboard"
+              aria-current={dashboardAtivo ? "page" : undefined}
+              className={[
+                "rounded-lg px-2 py-1 text-sm font-medium",
+                dashboardAtivo
+                  ? "bg-neutral-100 text-neutral-900"
+                  : "text-info hover:underline",
+              ].join(" ")}
+            >
+              Dashboard
+            </Link>
             <Link
               href="/carteira"
               aria-current={carteiraAtivo ? "page" : undefined}

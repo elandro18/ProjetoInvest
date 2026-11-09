@@ -8,7 +8,8 @@ import { lerRegistro, type UsuarioE2E } from "./usuario-e2e";
  * Cobre o que o navegador consegue observar sem provedor de e-mail:
  * - rota privada sem sessão redireciona para o login com `callbackUrl`;
  * - credencial inválida mostra erro genérico;
- * - login válido chega à área de conta;
+ * - login válido chega ao dashboard;
+ * - navegação para a conta preserva a área de conta;
  * - logout volta para o login;
  * - diálogo de encerramento abre, ESC fecha e senha errada mantém o erro.
  *
@@ -37,8 +38,8 @@ async function entrar(page: Page, usuario: UsuarioE2E): Promise<void> {
   await page.getByLabel("Senha", { exact: true }).fill(usuario.senha);
   await page.getByRole("button", { name: "Entrar" }).click();
 
-  await expect(page).toHaveURL(/\/conta$/);
-  await expect(page.getByRole("heading", { name: "Conta", level: 1 })).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible();
 }
 
 test("/conta sem sessão redireciona para o login preservando o destino", async ({ page }) => {
@@ -62,11 +63,13 @@ test("login inválido mostra erro genérico sem revelar a causa", async ({ page 
   await expect(page).toHaveURL(/\/login$/);
 });
 
-test("login válido leva à área de conta", async ({ page }) => {
+test("login válido leva ao dashboard", async ({ page }) => {
   const usuario = usuarioDisponivel();
 
   await entrar(page, usuario);
 
+  await page.goto("/conta");
+  await expect(page.getByRole("heading", { name: "Conta", level: 1 })).toBeVisible();
   await expect(page.getByRole("main").getByText(usuario.nome)).toBeVisible();
   await expect(page.getByRole("main").getByText(usuario.email)).toBeVisible();
 });
@@ -75,6 +78,10 @@ test("logout encerra a sessão e volta para o login", async ({ page }) => {
   const usuario = usuarioDisponivel();
 
   await entrar(page, usuario);
+  await page.goto("/conta");
+  // Espera a sessão da tela carregar: sem isso, a resposta de `/api/auth/sessao`
+  // pode chegar depois do logout e reemitir o cookie (corrida do teste).
+  await expect(page.getByRole("main").getByText(usuario.nome)).toBeVisible();
   await page.getByRole("button", { name: "Sair" }).click();
 
   await expect(page).toHaveURL(/\/login$/);
@@ -88,6 +95,7 @@ test("diálogo de encerramento abre, ESC fecha e senha errada mantém o erro", a
   const usuario = usuarioDisponivel();
 
   await entrar(page, usuario);
+  await page.goto("/conta");
 
   await page.getByRole("button", { name: "Encerrar conta" }).click();
   const dialogo = page.getByRole("dialog");

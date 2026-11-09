@@ -128,7 +128,7 @@ export function LoginForm({
         return;
       }
 
-      router.push(callbackUrl ?? "/conta");
+      router.push(callbackUrl ?? "/dashboard");
       router.refresh();
     } finally {
       setEnviando(false);

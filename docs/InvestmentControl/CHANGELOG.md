@@ -332,3 +332,36 @@
 ### Removido
 
 - Nada.
+
+## 09/11/2026 — Dashboard implementado (RN-061) — Fase 1 concluída
+
+### Implementado (código)
+
+- **RN-061-1** — indicadores: patrimônio, total investido, valor atual, resultado acumulado (capital + rendimentos de todo o histórico), renda mensal, rendimentos do ano, percentuais por classe, comparação com a meta, evolução mensal de rendimentos (12 meses) e últimos dividendos.
+- **RN-061-2** — `GET /api/dashboard` com blocos independentes, `erros[]` por bloco e 503 apenas quando nenhum bloco é produzido.
+- **RN-061-3** — cards, barra de meta e quatro gráficos SVG (classe, segmento, evolução patrimonial e rendimentos) com tabela equivalente acessível; dividendos em lista.
+- **RN-061-4** — painel de oportunidades com classes e segmentos abaixo da meta e o valor necessário; watchlist, alertas e sugestão de aporte como "disponível em breve".
+- **RN-061-5** — tela `/dashboard`, estado de primeiro acesso, retry por bloco, Dashboard como primeiro item da navegação e destino padrão pós-login.
+
+### Resultado das verificações
+
+- 763 testes unitários/integração + 52 E2E verdes.
+- Cobertura: 86,17% de linhas global; `src/modules/dashboard` 97,1% linhas / 92,8% branches.
+- `lint`, `typecheck`, `build` verdes.
+
+### Decisões
+
+- Gráficos em **SVG próprio**, com tabela equivalente — sem adicionar biblioteca de charts.
+- Pós-login passa a cair em `/dashboard` (respeitando `callbackUrl` quando presente).
+- `resultadoAcumulado = (valorAtual − totalInvestido) + rendimentos totais`; `rendimentosAno` continua restrito ao ano corrente.
+
+### Pendências
+
+- **RN-001-5** (deploy Vercel + Neon) é a única pendência da Fase 1 e depende de credenciais.
+- O shell da `UI_SPEC` §2.1 (sidebar/barra inferior) não foi implementado; a navegação segue no header superior.
+- `UI_SPEC` §4 descreve três gráficos; a feature prevê seis, e os seis foram entregues.
+- Blocos de Fases 2/4 (aportes, watchlist, alertas e sugestão) aparecem como "disponível em breve", conforme o próprio spec.
+
+### Removido
+
+- Nada.

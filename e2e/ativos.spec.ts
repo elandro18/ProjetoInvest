@@ -55,7 +55,7 @@ async function entrar(page: Page, usuario: UsuarioE2E): Promise<void> {
   await page.getByLabel("Senha", { exact: true }).fill(usuario.senha);
   await page.getByRole("button", { name: "Entrar" }).click();
 
-  await expect(page).toHaveURL(/\/conta$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
 }
 
 async function criarAtivo(page: Page, dados: DadosNovoAtivo): Promise<void> {

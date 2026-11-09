@@ -119,7 +119,7 @@ async function entrar(page: Page, usuario: UsuarioE2E): Promise<void> {
   await page.getByLabel("Senha", { exact: true }).fill(usuario.senha);
   await page.getByRole("button", { name: "Entrar" }).click();
 
-  await expect(page).toHaveURL(/\/conta$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
 }
 
 async function entrarViaApi(request: APIRequestContext, usuario: UsuarioE2E): Promise<void> {
