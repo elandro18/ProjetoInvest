@@ -360,6 +360,55 @@ Retorna os catálogos usados pelos formulários e pelas metas de alocação.
 
 > **Limitação da Fase 1:** a série de FII é reconstruída pelo **custo** das movimentações; a renda fixa usa o **saldo atual como constante** porque não há histórico de saldo (`DATA_MODEL.md` §4.8). A série passa a refletir mercado quando `historico_preco` e o histórico de saldo existirem (RN-030/RN-059).
 
+### 5.3 `GET /api/dashboard`
+
+Agregado da tela inicial. Blocos são independentes: falha em um bloco não derruba os demais.
+
+**200**
+
+```json
+{
+  "indicadores": {
+    "patrimonioTotal": "152340.00",
+    "totalInvestido": "140000.00",
+    "valorAtual": "152340.00",
+    "resultadoAcumulado": "19680.00",
+    "rendaMensal": "820.00",
+    "rendimentosAno": "7340.00",
+    "percentualRendaFixa": "40.041000",
+    "percentualFiis": "59.959000",
+    "vazio": false,
+    "meta": [
+      { "codigo": "RENDA_FIXA", "atual": "40.041000", "meta": "50.000000", "desvio": "-9.959000", "situacao": "ABAIXO" }
+    ]
+  },
+  "graficos": {
+    "porClasse": [],
+    "porSegmento": [],
+    "evolucaoPatrimonial": [ { "data": "2026-01-31", "patrimonio": "120000.00", "rendaFixa": "50000.00", "fiis": "70000.00" } ],
+    "evolucaoRendimentos": [ { "mes": "2026-01", "valor": "0.00" } ],
+    "aportes": [],
+    "dividendos": [ { "data": "2026-01-15", "ativo": "HGLG11", "valor": "80.00" } ]
+  },
+  "oportunidades": {
+    "classesAbaixo": [],
+    "segmentosAbaixo": [],
+    "watchlist": [],
+    "comAlerta": [],
+    "sugestaoAporte": null
+  },
+  "erros": []
+}
+```
+
+- `resultadoAcumulado = (valorAtual − totalInvestido) + rendimentos totais (todo o histórico)`.
+- `vazio: true` quando o usuário não tem patrimônio nem proventos — a UI mostra o estado de primeiro acesso.
+- `totalInvestido` = custo dos FIIs + `valorAplicado` da renda fixa.
+- `evolucaoRendimentos` = soma mensal de `rendimento` nos últimos 12 meses.
+- `dividendos` = últimos 12 proventos com data + ticker.
+- `aportes`, `watchlist`, `comAlerta` e `sugestaoAporte` ficam vazios/`null` até as Fases 2 e 4 — a UI exibe "disponível em breve".
+- `erros[]` = `[{ "bloco", "code", "message" }]` para blocos que falharam.
+
 ---
 
 ## 6. Renda fixa
