@@ -16,9 +16,13 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  // O login usa Argon2id (memory-hard): acima de 3 workers no host local as
-  // verificações concorrentes estouram o timeout de navegação do login.
-  workers: process.env.CI ? 1 : 3,
+  // A suíte compartilha os titulares A/B da fixture e cada arquivo cria/limpa
+  // seus próprios dados para o MESMO titular (ativos, renda fixa e
+  // movimentações). Rodar arquivos em paralelo faz um ver a carteira do outro
+  // no meio do fluxo (ex.: a ordenação de ativos enxerga o FII das
+  // movimentações). Por isso a execução é serial — igual ao CI. O login usa
+  // Argon2id (memory-hard); concorrência também estoura o timeout.
+  workers: 1,
   reporter: [["list"], ["html", { open: "never" }]],
   // Conta de teste ativada no banco para o login válido (limpa no teardown).
   globalSetup: "./e2e/global-setup.ts",

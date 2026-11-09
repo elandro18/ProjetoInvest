@@ -214,7 +214,7 @@
 
 - Nada.
 
-## 09/11/2026 — Movimentações e posição: banco, domínio e API (RN-014)
+## 09/11/2026 — Movimentações e posição: banco, domínio, API e telas (RN-014)
 
 ### Implementado (código)
 
@@ -222,12 +222,15 @@
 - **RN-014-2** — domínio puro de posição: compra, venda com baixa proporcional, reconstrução ordenada por `(data, criadoEm)`, validação de total (tolerância R$ 0,01) e estratégia de baixa isolada (custo médio).
 - **RN-014-3** — `POST /api/movimentacoes` transacional com idempotência, criação de rendimento em dividendo/juros, confirmação explícita de posição negativa (auditada) e rejeição de `APLICACAO_RF`/`RESGATE_RF` até `PEND-017`.
 - **RN-014-4** — `GET /api/movimentacoes` (filtros, paginação, `sort`) e cancelamento lógico com recálculo da posição.
+- **RN-014-5** — tela `/movimentacoes` com lista, filtros, formulário com total em tempo real, diálogo de posição negativa e cancelamento com motivo.
+- **RN-014-6** — 9 cenários E2E (compra, dividendo, venda confirmada, cancelamento, filtros, ordenação, 360 px, idempotência e isolamento A/B) e teardown FK-safe.
 
 ### Resultado das verificações
 
 - Casos de ouro G1–G7 e G14 verdes.
-- 622 testes; cobertura global 85,69% e módulo de domínio acima do gate.
+- 630 testes + 34 E2E; cobertura global 85,69% e `src/modules/posicao` 100% linhas/branches.
 - `lint`, `typecheck`, `build` verdes.
+- Playwright serializado (`workers: 1`) para evitar colisão de dados entre specs que compartilham o mesmo titular.
 
 ### Documentação corrigida após divergência reportada
 
