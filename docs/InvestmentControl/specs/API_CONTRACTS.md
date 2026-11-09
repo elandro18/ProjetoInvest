@@ -324,10 +324,29 @@ Retorna os catálogos usados pelos formulários e pelas metas de alocação.
   "porSegmento": [
     { "codigo": "LOGISTICA", "nome": "Logística", "valor": "32000.00", "percentual": "35.044000" }
   ],
+  "posicoes": [
+    {
+      "ativoId": "uuid",
+      "ticker": "HGLG11",
+      "nome": "CSHG Logística",
+      "classe": { "codigo": "FII", "nome": "Fundos Imobiliários" },
+      "segmento": { "codigo": "LOGISTICA", "nome": "Logística" },
+      "quantidade": "100.00000000",
+      "precoMedio": "162.350000",
+      "custoTotal": "16235.00",
+      "valorAtual": "16235.00",
+      "valorIndisponivel": true,
+      "percentual": "10.656000"
+    }
+  ],
+  "consistente": true,
   "atualizadoEm": "2026-11-07T18:00:00Z",
-  "cotacoes": { "statusDado": "MERCADO", "dataReferencia": "2026-11-07" }
+  "cotacoes": { "statusDado": "INDISPONIVEL", "dataReferencia": null }
 }
 ```
+
+> `consistente: false` sinaliza que a soma das classes não fechou com o total (tolerância R$ 0,01) — a divergência é registrada em log.
+> Sem cotação de mercado na Fase 1, `cotacoes.statusDado` é `INDISPONIVEL`; FII entra pelo custo (`valorIndisponivel: true`) e renda fixa pelo saldo.
 
 > Cada item de `porClasse`/`porSegmento` e cada posição em `/api/ativos` pode trazer `valorIndisponivel: true` quando não houver cotação; nesse caso o valor é o custo de aquisição (RN-091).
 
@@ -336,6 +355,10 @@ Retorna os catálogos usados pelos formulários e pelas metas de alocação.
 **Query:** `de` (default início do ano), `ate` (default hoje), `granularidade` (`dia|mes`, default `mes`).
 
 **200:** `{ "pontos": [ { "data": "2026-01-31", "patrimonio": "120000.00", "rendaFixa": "50000.00", "fiis": "70000.00" } ] }`
+
+**Erros:** `VALIDACAO` (422) quando `de > ate` ou `granularidade` inválida.
+
+> **Limitação da Fase 1:** a série de FII é reconstruída pelo **custo** das movimentações; a renda fixa usa o **saldo atual como constante** porque não há histórico de saldo (`DATA_MODEL.md` §4.8). A série passa a refletir mercado quando `historico_preco` e o histórico de saldo existirem (RN-030/RN-059).
 
 ---
 

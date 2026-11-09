@@ -9,6 +9,9 @@
 const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
 
+/** Fuso usado nos recortes mensal/anual da carteira (RN-020). */
+export const FUSO_SAO_PAULO = "America/Sao_Paulo";
+
 function parseIso(valor: string): number | null {
   if (!DATA_ISO.test(valor)) {
     return null;
@@ -36,6 +39,35 @@ export function dataIsoValida(valor: string): boolean {
 /** Data de hoje em UTC, no formato de negócio. */
 export function hojeIso(agora: Date = new Date()): string {
   return agora.toISOString().slice(0, 10);
+}
+
+/**
+ * Data de hoje em um fuso IANA, no formato de negócio (`YYYY-MM-DD`).
+ *
+ * O recorte mensal/anual da carteira é de negócio e precisa do calendário de
+ * São Paulo, não do UTC do processo (RN-020): às 22h de 31/12 em São Paulo já
+ * é 01/01 em UTC, e o rendimento do ano não pode "virar" antes da meia-noite
+ * local.
+ */
+export function hojeIsoEmFuso(fuso: string, agora: Date = new Date()): string {
+  const partes = new Intl.DateTimeFormat("en-CA", {
+    timeZone: fuso,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(agora);
+
+  const valores: Record<string, string> = {};
+  for (const parte of partes) {
+    valores[parte.type] = parte.value;
+  }
+
+  return `${valores.year}-${valores.month}-${valores.day}`;
+}
+
+/** Data de hoje no calendário de São Paulo (RN-020). */
+export function hojeIsoSaoPaulo(agora: Date = new Date()): string {
+  return hojeIsoEmFuso(FUSO_SAO_PAULO, agora);
 }
 
 /** Converte um `Date` de coluna `date` (meia-noite UTC) para `YYYY-MM-DD`. */

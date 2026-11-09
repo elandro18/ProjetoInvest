@@ -29,6 +29,7 @@ status: draft
 | RN-020-2 | Backend | ProjetoInvest | Implementar endpoints de carteira e evolução |
 | RN-020-3 | Frontend | ProjetoInvest | Implementar tela de carteira |
 | RN-020-4 | Backend | ProjetoInvest | Testes de consolidação, consistência e performance |
+| RN-020-5 | Backend | ProjetoInvest | Expor as posições de FII na resposta da carteira |
 
 ## Ordem de Execução
 
@@ -36,7 +37,7 @@ status: draft
 RN-020-1
 
 **Wave 2 — API:**
-RN-020-2
+RN-020-2 → RN-020-5
 
 **Wave 3 — Frontend:**
 RN-020-3
@@ -141,3 +142,45 @@ Cobrir consistência (soma por classe = total), ausência de preço, isolamento 
 - Dado um ativo sem preço, Quando consulto, Então o valor é o custo e há marcação de indisponibilidade.
 
 **Dependências:** RN-020-1, RN-020-2, RN-020-3
+
+---
+
+### RN-020-5. Expor as posições de FII na resposta da carteira
+
+| Campo | Valor |
+|---|---|
+| **Título** | `[ProjetoInvest] RN-020-5 — Expor as posições de FII na resposta da carteira` |
+| **Activity** | Development |
+| **RNs** | RN-015, RN-020, RN-091 |
+
+**Descrição:**
+Adicionar o campo aditivo `posicoes` em `GET /api/carteira` para a tabela da tela de carteira: uma linha por ativo com quantidade > 0, com ticker, nome, classe, segmento, quantidade, preço médio, custo total, valor atual, marcação de indisponibilidade e percentual do patrimônio. Ordenar por valor atual desc. Não criar endpoint novo.
+
+**Contrato:**
+
+```
+GET /api/carteira
+Response 200: { ..., "posicoes": [ { "ativoId", "ticker", "nome", "classe": { "codigo", "nome" }, "segmento": { "codigo", "nome" } | null, "quantidade", "precoMedio", "custoTotal", "valorAtual", "valorIndisponivel", "percentual" } ] }
+```
+
+**Tabelas de referência:**
+
+| Tabela | Coluna alvo | Uso |
+|---|---|---|
+| `posicao_ativo` | `quantidade`, `preco_medio`, `custo_total` | Base da linha |
+| `ativo` | `ticker`, `nome`, `classe_id`, `segmento_id` | Identificação |
+| `classe_ativo`/`segmento_ativo` | `codigo`, `nome` | Rótulos |
+
+**Validações / Erros:**
+- Nenhum código novo; erros existentes de carteira.
+- Posições com quantidade 0 não aparecem.
+
+**Critério de Aceitação:**
+- Dado um ativo com posição, Quando consulto a carteira, Então ele aparece em `posicoes` com valor pelo custo e `valorIndisponivel: true`.
+- Dado ativo com posição zerada, Quando consulto, Então ele não aparece.
+- Dado 3 ativos, Quando consulto, Então a ordem é por `valorAtual` desc e o percentual usa o patrimônio total.
+
+**Dependências:** RN-020-2
+
+**Notas técnicas:**
+- Campo aditivo compatível (API_CONTRACTS §15); a tabela de RF continua em `/renda-fixa`.

@@ -241,6 +241,8 @@ erDiagram
 
 **Índices:** `ix_rf_usuario_vencimento`, `ix_rf_usuario_instituicao`.
 
+> **Sem histórico de saldo na Fase 1:** `saldo_atual` é sobrescrito a cada atualização manual (RN-059). A evolução da carteira (`GET /api/carteira/evolucao`) usa o saldo atual como constante; o histórico de saldo entra quando existir a rotina de atualização automática (RN-053/RN-060).
+
 ### 4.9 `alocacao_meta`
 
 | Coluna | Tipo | Restrições | Descrição |
