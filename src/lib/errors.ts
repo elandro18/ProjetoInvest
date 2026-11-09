@@ -32,6 +32,11 @@ export type AppErrorCode =
   | "ATIVO_CLASSE_INVALIDA"
   | "ATIVO_CNPJ_INVALIDO"
   | "ATIVO_CLASSE_IMUTAVEL"
+  | "RF_NAO_ENCONTRADA"
+  | "RF_VENCIMENTO_INVALIDO"
+  | "RF_TAXA_INVALIDA"
+  | "RF_SALDO_INVALIDO"
+  | "RF_CAMPO_IMUTAVEL"
   | "SEM_PERMISSAO"
   | "RECURSO_NAO_ENCONTRADO"
   | "RATE_LIMIT_EXCEDIDO"
@@ -121,6 +126,17 @@ export const ERROR_CATALOG: Readonly<Record<AppErrorCode, ErrorCatalogEntry>> = 
   ATIVO_CLASSE_IMUTAVEL: {
     status: 422,
     message: "A classe não pode ser alterada após movimentações.",
+  },
+  RF_NAO_ENCONTRADA: { status: 404, message: "Investimento não encontrado." },
+  RF_VENCIMENTO_INVALIDO: {
+    status: 422,
+    message: "O vencimento deve ser posterior à aplicação.",
+  },
+  RF_TAXA_INVALIDA: { status: 422, message: "Taxa inválida." },
+  RF_SALDO_INVALIDO: { status: 422, message: "Saldo atual inválido." },
+  RF_CAMPO_IMUTAVEL: {
+    status: 422,
+    message: "Produto, indexador e data de aplicação não podem ser alterados.",
   },
   SEM_PERMISSAO: { status: 403, message: "Você não tem permissão para esta operação." },
   RECURSO_NAO_ENCONTRADO: { status: 404, message: "Recurso não encontrado." },
@@ -287,6 +303,26 @@ export const errors = {
 
   ativoClasseImutavel(details?: AppErrorDetails): AppError {
     return new AppError("ATIVO_CLASSE_IMUTAVEL", { details });
+  },
+
+  rfNaoEncontrada(details?: AppErrorDetails): AppError {
+    return new AppError("RF_NAO_ENCONTRADA", { details });
+  },
+
+  rfVencimentoInvalido(details?: AppErrorDetails): AppError {
+    return new AppError("RF_VENCIMENTO_INVALIDO", { details });
+  },
+
+  rfTaxaInvalida(details?: AppErrorDetails): AppError {
+    return new AppError("RF_TAXA_INVALIDA", { details });
+  },
+
+  rfSaldoInvalido(details?: AppErrorDetails): AppError {
+    return new AppError("RF_SALDO_INVALIDO", { details });
+  },
+
+  rfCampoImutavel(details?: AppErrorDetails): AppError {
+    return new AppError("RF_CAMPO_IMUTAVEL", { details });
   },
 
   semPermissao(details?: AppErrorDetails): AppError {

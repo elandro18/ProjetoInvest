@@ -341,7 +341,7 @@ Retorna os catálogos usados pelos formulários e pelas metas de alocação.
 
 ### 6.1 `GET /api/renda-fixa`
 
-**Query:** `instituicao`, `produto`, `vencimentoAte`, `page`, `pageSize`.
+**Query:** `instituicao`, `produto`, `vencimentoAte`, `page`, `pageSize`, `sort` (`instituicao|produto|vencimento|dataAplicacao|saldoAtual|criadoEm`), `order`.
 **200:** lista com `saldoAtual`, `statusSaldo`, `vencimento`, `liquidez`, `coberturaFgc`.
 
 ### 6.2 `POST /api/renda-fixa`
@@ -366,7 +366,7 @@ Retorna os catálogos usados pelos formulários e pelas metas de alocação.
 
 ### 6.3 `PATCH /api/renda-fixa/{id}`
 
-Atualiza saldo e status (RN-059); produto, indexador e data de aplicação são imutáveis (`RF_CAMPO_IMUTAVEL`).
+Atualiza `saldoAtual`, `statusSaldo`, `liquidez`, `carenciaAte`, `coberturaFgc` e `observacoes` (RN-059); `produto`, `indexador`, `taxa`, `dataAplicacao`, `valorAplicado` e `vencimento` são imutáveis (`RF_CAMPO_IMUTAVEL`).
 
 ### 6.4 `GET /api/renda-fixa/alertas`
 

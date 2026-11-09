@@ -67,6 +67,49 @@ enum TipoAceiteLegal {
   @@map("tipo_aceite_legal")
 }
 
+/// Produto de renda fixa (RN-057, DATA_MODEL.md §4.8).
+enum ProdutoRendaFixa {
+  TESOURO_SELIC
+  TESOURO_IPCA
+  TESOURO_PREFIXADO
+  CDB
+  LCI
+  LCA
+  DEBENTURE
+  OUTRO
+
+  @@map("produto_renda_fixa")
+}
+
+/// Indexador contratado do título (RN-057).
+enum IndexadorRendaFixa {
+  PRE
+  POS_CDI
+  IPCA
+  SELIC
+  OUTRO
+
+  @@map("indexador_renda_fixa")
+}
+
+/// Liquidez contratada do título (RN-057).
+enum LiquidezRendaFixa {
+  DIARIA
+  NO_VENCIMENTO
+  PRAZO
+
+  @@map("liquidez_renda_fixa")
+}
+
+/// Confiança do saldo informado pelo titular (RN-059).
+enum StatusSaldo {
+  INFORMADO
+  ESTIMADO
+  CONFIRMADO
+
+  @@map("status_saldo")
+}
+
 /// Catálogo de classes de ativo (RENDA_FIXA, FII). Dado de referência, não do usuário.
 model ClasseAtivo {
   id        String          @id @default(uuid()) @db.Uuid
@@ -151,6 +194,7 @@ model Usuario {
   tokens            TokenConta[]
   aceites           AceiteLegal[]
   ativos            Ativo[]
+  rendaFixa         InvestimentoRendaFixa[]
 
   @@map("usuario")
 }
@@ -198,6 +242,35 @@ model Ativo {
   @@index([usuarioId, status], map: "ix_ativo_usuario_status")
   @@index([segmentoId], map: "ix_ativo_segmento")
   @@map("ativo")
+}
+
+/// Título de renda fixa do titular (RN-057, DATA_MODEL.md §4.8). Não gera
+/// `posicao_ativo`: a consolidação da carteira soma `saldo_atual`. Os CHECKs de
+/// taxa/valor/vencimento e o trigger de `atualizado_em` são aplicados na
+/// migration (Prisma não expressa CHECK).
+model InvestimentoRendaFixa {
+  id            String              @id @default(uuid()) @db.Uuid
+  usuarioId     String              @map("usuario_id") @db.Uuid
+  instituicao   String              @db.VarChar(120)
+  produto       ProdutoRendaFixa
+  indexador     IndexadorRendaFixa
+  taxa          Decimal             @db.Decimal(9, 6)
+  dataAplicacao DateTime            @map("data_aplicacao") @db.Date
+  vencimento    DateTime?           @db.Date
+  valorAplicado Decimal             @map("valor_aplicado") @db.Decimal(18, 2)
+  saldoAtual    Decimal             @map("saldo_atual") @db.Decimal(18, 2)
+  statusSaldo   StatusSaldo         @default(INFORMADO) @map("status_saldo")
+  liquidez      LiquidezRendaFixa
+  carenciaAte   DateTime?           @map("carencia_ate") @db.Date
+  coberturaFgc  Boolean             @default(false) @map("cobertura_fgc")
+  observacoes   String?             @db.Text
+  criadoEm      DateTime            @default(now()) @map("criado_em") @db.Timestamptz(6)
+  atualizadoEm  DateTime            @default(now()) @map("atualizado_em") @db.Timestamptz(6)
+  usuario       Usuario             @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId, vencimento], map: "ix_rf_usuario_vencimento")
+  @@index([usuarioId, instituicao], map: "ix_rf_usuario_instituicao")
+  @@map("investimento_renda_fixa")
 }
 
 /// Evidência de consentimento legal versionado (RN-087). Nunca guarda IP puro.
