@@ -560,7 +560,7 @@ Substitui o conjunto vigente em transação (RN-021, RN-022).
 
 `GET /api/aportes/historico?page=&pageSize=` → `{ data: [...], meta }` com data, valor, decisão e resumo da distribuição (RN-052).
 
-`PATCH` body `{ "decisao": "ACEITA|IGNORADA|ALTERADA", "observacoes": "string?" }` → **200** `{ "id", "decisaoUsuario", "decisaoEm" }` (RN-053).
+`PATCH` body `{ "decisao": "ACEITA|IGNORADA|ALTERADA", "observacoes": "string?" }` → **200** `{ "id", "decisaoUsuario", "decisaoEm", "observacoes" }` (RN-053).
 
 **Erros:** `APORTE_NAO_ENCONTRADO` (404), `APORTE_DECISAO_INVALIDA` (422).
 

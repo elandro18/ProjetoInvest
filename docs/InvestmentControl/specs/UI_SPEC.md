@@ -270,6 +270,7 @@ Abas: **Visão geral** (dados cadastrais + posição), **Movimentações** (hist
 | RNs | RN-025 a RN-028, RN-050 a RN-056, RN-076, RN-078 |
 
 > A tela nunca exibe "recomendação de compra": o rótulo é "sugestão de distribuição" e "ativos que podem ser estudados".
+> **Escopo por feature:** o simulador (RN-028) e o histórico (RN-052) são features separadas. A decisão aceita observação opcional e fica registrada na sugestão; segmentos sem aporte não são listados.
 
 ---
 
