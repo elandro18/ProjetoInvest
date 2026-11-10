@@ -266,6 +266,7 @@ Abas: **Visão geral** (dados cadastrais + posição), **Movimentações** (hist
 | Resultado | Distribuição sugerida por classe e segmento, ativos para estudar, justificativa por linha, alertas aplicáveis |
 | Ações | "Aceitar", "Ignorar", "Alterar" — cada uma registra a decisão |
 | Simulador | Comparativo antes/depois com barras; nenhum valor é aplicado à carteira |
+| Histórico | Link "Ver histórico" para `/aportes/historico` — lista e detalhe somente leitura |
 | Estados | Carregando (cálculo) · sem metas (CTA para `/alocacao`) · dados insuficientes · resultado |
 | RNs | RN-025 a RN-028, RN-050 a RN-056, RN-076, RN-078 |
 

@@ -2,6 +2,9 @@
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
 
+/** Largura do painel; `lg` é para conteúdo de leitura longa (ex.: snapshot). */
+export type DialogSize = "md" | "lg";
+
 export interface DialogProps {
   readonly open: boolean;
   readonly title: string;
@@ -9,7 +12,13 @@ export interface DialogProps {
   readonly children: ReactNode;
   readonly footer?: ReactNode;
   readonly initialFocusId?: string | undefined;
+  readonly size?: DialogSize;
 }
+
+const LARGURA: Record<DialogSize, string> = {
+  md: "max-w-md",
+  lg: "max-w-3xl",
+};
 
 const SELETOR_FOCAVEL =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -22,7 +31,15 @@ const SELETOR_FOCAVEL =
  * - Tab/Shift+Tab presos dentro do painel;
  * - ESC cancela e o foco volta ao elemento que abriu.
  */
-export function Dialog({ open, title, onClose, children, footer, initialFocusId }: DialogProps) {
+export function Dialog({
+  open,
+  title,
+  onClose,
+  children,
+  footer,
+  initialFocusId,
+  size = "md",
+}: DialogProps) {
   const painelRef = useRef<HTMLDivElement>(null);
   const tituloId = useId();
   const onCloseRef = useRef(onClose);
@@ -106,7 +123,10 @@ export function Dialog({ open, title, onClose, children, footer, initialFocusId 
         aria-modal="true"
         aria-labelledby={tituloId}
         tabIndex={-1}
-        className="max-h-[85dvh] w-full max-w-md overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-0 p-6 shadow-lg"
+        className={[
+          "max-h-[85dvh] w-full overflow-y-auto rounded-xl border border-neutral-200 bg-neutral-0 p-6 shadow-lg",
+          LARGURA[size],
+        ].join(" ")}
       >
         <div className="flex items-start justify-between gap-4">
           <h2 id={tituloId} className="text-lg font-semibold text-neutral-900">

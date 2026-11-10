@@ -467,12 +467,17 @@ export function AportesView({ hoje }: AportesViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-neutral-900">Aportes</h1>
-        <p className="text-sm text-neutral-700">
-          Informe quanto você pretende aportar para ver onde esse valor reduz mais o desvio em
-          relação às suas metas.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold text-neutral-900">Aportes</h1>
+          <p className="text-sm text-neutral-700">
+            Informe quanto você pretende aportar para ver onde esse valor reduz mais o desvio em
+            relação às suas metas.
+          </p>
+        </div>
+        <Link href="/aportes/historico" className={`${ESTILO_LINK_BOTAO} ml-auto`}>
+          Ver histórico
+        </Link>
       </div>
 
       <AvisoPermanente />
