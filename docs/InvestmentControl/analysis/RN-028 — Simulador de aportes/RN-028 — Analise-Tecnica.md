@@ -41,4 +41,4 @@ Operação **stateless**: reutiliza o motor de priorização da RN-025 para calc
 - Depende de RN-025-2 (motor) e da carteira/desvios.
 - Sem cotação, FII entra pelo custo (RN-091); o simulador não promete rentabilidade.
 - Carteira vazia: distribui conforme a meta.
-- Segmentos sem aporte não aparecem no `depois`.
+- A API devolve todas as linhas (inclusive as sem aporte) para permitir o comparativo; a UI pode omitir as que não mudaram.
