@@ -118,6 +118,17 @@ enum EscopoMeta {
   @@map("escopo_meta")
 }
 
+/// Dimensão do controle de concentração (RN-049, DATA_MODEL.md §4.18).
+enum DimensaoConcentracao {
+  ATIVO
+  GESTORA
+  SEGMENTO
+  EMISSOR
+  IMOVEL
+
+  @@map("dimensao_concentracao")
+}
+
 /// Tipo do fato que altera posição, caixa ou rendimento (RN-014).
 enum TipoMovimentacao {
   COMPRA
@@ -240,6 +251,7 @@ model Usuario {
   posicoes          PosicaoAtivo[]
   rendimentos       Rendimento[]
   metasAlocacao     AlocacaoMeta[]
+  limitesConcentracao LimiteConcentracao[]
 
   @@map("usuario")
 }
@@ -342,6 +354,26 @@ model AlocacaoMeta {
 
   @@index([usuarioId, escopo, vigenciaInicio(sort: Desc)], map: "ix_meta_usuario_escopo")
   @@map("alocacao_meta")
+}
+
+/// Limite de concentração versionado por vigência (RN-049, RN-082;
+/// DATA_MODEL.md §4.18). `referencia` nula representa o default da dimensão.
+/// Os CHECKs de faixa do percentual e de vigência, além do índice único
+/// parcial de um limite vigente por dimensão/referência, são aplicados na
+/// migration (Prisma não os expressa).
+model LimiteConcentracao {
+  id             String               @id @default(uuid()) @db.Uuid
+  usuarioId      String               @map("usuario_id") @db.Uuid
+  dimensao       DimensaoConcentracao
+  referencia     String?              @db.VarChar(120)
+  percentualMax  Decimal              @map("percentual_max") @db.Decimal(9, 6)
+  vigenciaInicio DateTime             @map("vigencia_inicio") @db.Date
+  vigenciaFim    DateTime?            @map("vigencia_fim") @db.Date
+  criadoEm       DateTime             @default(now()) @map("criado_em") @db.Timestamptz(6)
+  usuario        Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId, dimensao], map: "ix_limite_usuario")
+  @@map("limite_concentracao")
 }
 
 /// Razão de fatos financeiros do titular (RN-014, DATA_MODEL.md §4.5).

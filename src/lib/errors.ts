@@ -50,6 +50,7 @@ export type AppErrorCode =
   | "ALO_REFERENCIA_INVALIDA"
   | "ALO_META_DUPLICADA"
   | "ALO_METAS_AUSENTES"
+  | "RISCO_LIMITE_INVALIDO"
   | "SEM_PERMISSAO"
   | "RECURSO_NAO_ENCONTRADO"
   | "RATE_LIMIT_EXCEDIDO"
@@ -187,6 +188,10 @@ export const ERROR_CATALOG: Readonly<Record<AppErrorCode, ErrorCatalogEntry>> = 
   ALO_METAS_AUSENTES: {
     status: 409,
     message: "Configure as metas antes de calcular aportes.",
+  },
+  RISCO_LIMITE_INVALIDO: {
+    status: 422,
+    message: "Limite de concentração inválido.",
   },
   SEM_PERMISSAO: { status: 403, message: "Você não tem permissão para esta operação." },
   RECURSO_NAO_ENCONTRADO: { status: 404, message: "Recurso não encontrado." },
@@ -425,6 +430,10 @@ export const errors = {
 
   aloMetasAusentes(details?: AppErrorDetails): AppError {
     return new AppError("ALO_METAS_AUSENTES", { details });
+  },
+
+  riscoLimiteInvalido(details?: AppErrorDetails): AppError {
+    return new AppError("RISCO_LIMITE_INVALIDO", { details });
   },
 
   semPermissao(details?: AppErrorDetails): AppError {

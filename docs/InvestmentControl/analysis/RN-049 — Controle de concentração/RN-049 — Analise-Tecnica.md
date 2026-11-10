@@ -47,5 +47,5 @@ A base de cálculo é o patrimônio total (RN-089). Sem cotação de mercado, FI
 
 - Depende de `posicao_ativo`, `ativo` (gestor/segmento) e `investimento_renda_fixa` (instituição) — todos existentes.
 - Sem cotação, a concentração por ativo usa o custo; isso é aceitável na Fase 1 e muda quando a Fase 3 entrar.
-- Limites por gestora dependem do campo `gestor` preenchido no ativo; ativos sem gestor entram como "não informado" e não são alertados.
+- Limites por gestora dependem do campo `gestor` preenchido no ativo; ativos sem gestor são ignorados na dimensão GESTORA e não geram alerta.
 - A tela `/configuracoes` é nova; precisa entrar na navegação e no middleware.

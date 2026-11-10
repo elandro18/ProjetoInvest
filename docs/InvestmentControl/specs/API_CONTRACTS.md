@@ -625,6 +625,20 @@ Força atualização ignorando cache; registra em `log_integracao` (RN-037). **2
 
 > `limite: null` quando não configurado — nenhum alerta é gerado. `IMOVEL` fica indisponível até a Fase 3/4.
 
+### 12.2 `GET/PUT /api/configuracoes/limites`
+
+**GET 200**
+
+```json
+{ "vigente": [ { "dimensao": "ATIVO", "referencia": null, "percentualMax": "20.000000", "vigenciaInicio": "2026-11-09" } ], "historico": [] }
+```
+
+**PUT** `{ "limites": [ { "dimensao": "ATIVO", "referencia": null, "percentualMax": "20.000000" } ] }` → **200** com o conjunto vigente.
+
+- `referencia: null` é o **default da dimensão** (ex.: 20% para qualquer ativo); um limite específico da referência vence o default.
+- Comparação de referência é case-insensitive e sem espaços.
+- **Erros:** `RISCO_LIMITE_INVALIDO` (422) com `details.campo`.
+
 ---
 
 ## 13. Saúde

@@ -79,7 +79,8 @@ CREATE TABLE limite_concentracao (
   CONSTRAINT chk_limite_vigencia CHECK (vigencia_fim IS NULL OR vigencia_fim >= vigencia_inicio)
 );
 CREATE UNIQUE INDEX ux_limite_vigente
-  ON limite_concentracao (usuario_id, dimensao, COALESCE(referencia, ''));
+  ON limite_concentracao (usuario_id, dimensao, COALESCE(referencia, ''))
+  WHERE vigencia_fim IS NULL;
 CREATE INDEX ix_limite_usuario ON limite_concentracao (usuario_id, dimensao);
 ```
 

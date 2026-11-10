@@ -402,13 +402,13 @@ erDiagram
 | `id` | uuid | PK | — |
 | `usuario_id` | uuid | NOT NULL, FK | — |
 | `dimensao` | `dimensao_concentracao` | NOT NULL | — |
-| `referencia` | varchar(120) | NULL | Gestora, segmento ou imóvel; nulo = todos |
+| `referencia` | varchar(120) | NULL | Ativo (ticker), gestora, segmento, instituição emissora ou imóvel; nulo = default da dimensão |
 | `percentual_max` | numeric(9,6) | NOT NULL, `> 0 AND <= 100` | — |
 | `vigencia_inicio` | date | NOT NULL | — |
 | `vigencia_fim` | date | NULL | — |
 | `criado_em` | timestamptz | NOT NULL | — |
 
-**Índices:** `ux_limite_vigente` (único em `(usuario_id, dimensao, COALESCE(referencia, ''))`) garante **um limite vigente por referência**; `ix_limite_usuario` (`usuario_id`, `dimensao`).
+**Índices:** `ux_limite_vigente` (único parcial em `(usuario_id, dimensao, COALESCE(referencia, '')) WHERE vigencia_fim IS NULL`) garante **um limite vigente por referência**, preservando o histórico; `ix_limite_usuario` (`usuario_id`, `dimensao`).
 **Regra:** a substituição (PUT) encerra a vigência anterior e grava o novo conjunto na mesma transação.
 
 ### 4.19 `token_conta`
