@@ -21,6 +21,7 @@ import type { DecisaoAporteApi, SugestaoAporteApi } from "@/src/modules/aportes/
 import type { AtivoAvaliado, LinhaDistribuicaoSugerida } from "@/src/modules/aportes/tipos";
 import {
   ATALHOS_VALOR,
+  ESTILO_LINK_BOTAO,
   ROTULOS_DECISAO,
   TONS_DECISAO,
   ehDecisaoAporte,
@@ -38,9 +39,7 @@ import {
   type DecisaoAporte,
   type DecisaoRegistrada,
 } from "./aportes-ui";
-
-const ESTILO_LINK_BOTAO =
-  "inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-0 px-4 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50";
+import { SimuladorAporte } from "./simulador-view";
 
 const TITULOS_DECISAO: Readonly<Record<DecisaoAporte, string>> = {
   ACEITA: "Aceitar sugestão",
@@ -290,12 +289,15 @@ export interface AportesViewProps {
 }
 
 /**
- * Tela de aportes (UI_SPEC §10; RN-025, RN-026, RN-027, RN-051).
+ * Tela de aportes (UI_SPEC §10; RN-025 a RN-028, RN-051).
  *
  * Entrada de valor com atalhos → `POST /api/aportes/sugestao` → distribuição
  * por classe/segmento com justificativa, ativos para estudar com checklist e
  * classificação, alertas e decisão (`PATCH /decisao`). A sugestão nunca é
  * apagada: registrar a decisão só acrescenta o estado da decisão à tela.
+ *
+ * O simulador (RN-028) é um bloco separado e independente: tem o próprio
+ * valor, chama `POST /api/aportes/simulacao` e nunca altera a carteira.
  */
 export function AportesView({ hoje }: AportesViewProps) {
   const [valor, setValor] = useState("");
@@ -707,6 +709,8 @@ export function AportesView({ hoje }: AportesViewProps) {
           </section>
         </div>
       )}
+
+      <SimuladorAporte />
 
       <Dialog
         open={acao !== null}

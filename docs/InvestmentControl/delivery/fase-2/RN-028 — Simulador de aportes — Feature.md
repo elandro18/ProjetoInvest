@@ -71,7 +71,8 @@ Response 200: {
 - Metas ausentes → defaults lazy (RN-021), sem 409.
 
 **Critério de Aceitação:**
-- Dado RF 35% / FII 65% e simulação de R$ 1.000, Quando simulo, Então o `depois` aplica 100% em RF e o `delta` mostra o ganho em p.p. de RF.
+- Dado RF 35% / FII 65% com metas 50/50 e simulação de R$ 1.000, Quando simulo, Então o `depois` aplica 100% em RF e o `delta` mostra o ganho em p.p. de RF.
+- Dado carteira 35/65 e metas 35/65, Quando simulo, Então a distribuição é proporcional à meta (delta zero).
 - Dado valor 0, Quando simulo, Então recebo 422.
 - Dado simular, Quando consulto o banco, Então nenhuma `sugestao_aporte` foi criada.
 

@@ -27,6 +27,10 @@ export const ATALHOS_VALOR: readonly { readonly rotulo: string; readonly valor: 
   { rotulo: "R$ 2.000", valor: "2000.00" },
 ];
 
+/** Aparência de link com área de toque de botão (UI_SPEC §15, §17). */
+export const ESTILO_LINK_BOTAO =
+  "inline-flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-0 px-4 py-2 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-50";
+
 /** Rótulos do catálogo inicial (`prisma/seed.ts`) — fallback quando o código não tem mapa. */
 export const ROTULOS_REFERENCIA: Readonly<Record<string, string>> = {
   RENDA_FIXA: "Renda Fixa",

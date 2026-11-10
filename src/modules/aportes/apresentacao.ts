@@ -6,6 +6,19 @@ import type {
 } from "./tipos";
 
 /**
+ * Forma pública da simulação (API_CONTRACTS.md §8.2).
+ *
+ * O caso de uso da RN-028 já devolve o corpo do contrato; a tela importa o
+ * tipo daqui para não depender do módulo que lê carteira e metas.
+ */
+export type {
+  ComparativoSimulacao as ComparativoSimulacaoApi,
+  LinhaDelta as LinhaDeltaApi,
+  LinhaSimulacao as LinhaSimulacaoApi,
+  SimulacaoAporte as SimulacaoAporteApi,
+} from "./simular-aporte";
+
+/**
  * Forma pública da sugestão de aporte (API_CONTRACTS.md §8.1–§8.3).
  *
  * O snapshot já é gravado no formato do contrato; a apresentação só troca as
