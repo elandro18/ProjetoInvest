@@ -601,6 +601,29 @@ Força atualização ignorando cache; registra em `log_integracao` (RN-037). **2
 | `GET /api/configuracoes/provedores` | Provedores, capacidades, limites e custo (RN-034) | — |
 | `PATCH /api/configuracoes/provedores/{id}` | Prioridade e estado | `INT_PROVEDOR_NAO_ENCONTRADO` (404) |
 | `GET /api/configuracoes/termos` | Versões vigentes de termos e privacidade | — |
+| `GET /api/risco/concentracao` | Concentração atual por dimensão e alertas (RN-049) | — |
+
+### 12.1 `GET /api/risco/concentracao`
+
+**200**
+
+```json
+{
+  "baseCalculo": "PATRIMONIO_TOTAL",
+  "dimensoes": [
+    {
+      "dimensao": "ATIVO",
+      "disponivel": true,
+      "itens": [
+        { "referencia": "HGLG11", "nome": "CSHG Logística", "valor": "16235.00", "percentual": "10.656000", "limite": "20.000000", "excedido": false, "excessoPontos": "0.000000" }
+      ]
+    },
+    { "dimensao": "IMOVEL", "disponivel": false, "itens": [] }
+  ]
+}
+```
+
+> `limite: null` quando não configurado — nenhum alerta é gerado. `IMOVEL` fica indisponível até a Fase 3/4.
 
 ---
 

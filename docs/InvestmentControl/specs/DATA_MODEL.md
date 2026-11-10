@@ -406,6 +406,10 @@ erDiagram
 | `percentual_max` | numeric(9,6) | NOT NULL, `> 0 AND <= 100` | — |
 | `vigencia_inicio` | date | NOT NULL | — |
 | `vigencia_fim` | date | NULL | — |
+| `criado_em` | timestamptz | NOT NULL | — |
+
+**Índices:** `ux_limite_vigente` (único em `(usuario_id, dimensao, COALESCE(referencia, ''))`) garante **um limite vigente por referência**; `ix_limite_usuario` (`usuario_id`, `dimensao`).
+**Regra:** a substituição (PUT) encerra a vigência anterior e grava o novo conjunto na mesma transação.
 
 ### 4.19 `token_conta`
 
