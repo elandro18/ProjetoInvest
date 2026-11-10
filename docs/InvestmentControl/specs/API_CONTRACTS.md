@@ -553,8 +553,24 @@ Substitui o conjunto vigente em transação (RN-021, RN-022).
 
 ### 8.2 `POST /api/aportes/simulacao`
 
-**Body:** `{ "valorAporte": "1000.00" }`
-**200:** `{ "antes": {...}, "depois": {...}, "delta": { "porClasse": [...], "porSegmento": [...] } }`
+**Body:** `{ "valorAporte": "1500.00" }`
+
+**200**
+
+```json
+{
+  "valorAporte": "1500.00",
+  "antes": { "patrimonioTotal": "10000.00", "classe": [ { "codigo": "RENDA_FIXA", "valor": "3500.00", "percentual": "35.000000" } ], "segmento": [] },
+  "depois": { "patrimonioTotal": "11500.00", "classe": [ { "codigo": "RENDA_FIXA", "valor": "4500.00", "percentual": "39.130435" } ], "segmento": [] },
+  "delta": { "classe": [ { "codigo": "RENDA_FIXA", "pontosPercentuais": "4.130435" } ], "segmento": [] }
+}
+```
+
+- Stateless: não grava sugestão nem altera a carteira.
+- `depois` aplica a mesma distribuição da sugestão (RN-025).
+- `delta.pontosPercentuais = depois − antes`.
+
+**Erros:** `APORTE_VALOR_INVALIDO` (422).
 
 ### 8.3 `GET /api/aportes/historico` e `PATCH /api/aportes/{id}/decisao`
 
