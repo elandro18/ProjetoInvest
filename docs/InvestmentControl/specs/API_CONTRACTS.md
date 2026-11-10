@@ -572,9 +572,36 @@ Substitui o conjunto vigente em transação (RN-021, RN-022).
 
 **Erros:** `APORTE_VALOR_INVALIDO` (422).
 
-### 8.3 `GET /api/aportes/historico` e `PATCH /api/aportes/{id}/decisao`
+### 8.3 `GET /api/aportes/historico`
 
-`GET /api/aportes/historico?page=&pageSize=` → `{ data: [...], meta }` com data, valor, decisão e resumo da distribuição (RN-052).
+**Query:** `page`, `pageSize`, `de`, `ate`, `decisao` (`ACEITA|IGNORADA|ALTERADA`).
+
+**200**
+
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "data": "2026-11-10T12:00:00Z",
+      "valorDisponivel": "1000.00",
+      "decisaoUsuario": "ACEITA",
+      "decisaoEm": "2026-11-10T12:05:00Z",
+      "resumo": { "classe": [ { "codigo": "RENDA_FIXA", "valor": "1000.00" } ] }
+    }
+  ],
+  "meta": { "page": 1, "pageSize": 20, "total": 1, "totalPages": 1 }
+}
+```
+
+> Somente leitura, ordenado por `data` desc, sempre filtrado pelo usuário da sessão.
+
+### 8.4 `GET /api/aportes/{id}`
+
+**200:** snapshot completo (`distribuicaoAtual`, `distribuicaoSugerida`, `ativosAvaliados`, `justificativas`, `alertas`) + `decisaoUsuario`, `decisaoEm`, `observacoes`.
+**404:** `APORTE_NAO_ENCONTRADO` (inexistente ou de outro usuário).
+
+### 8.5 `PATCH /api/aportes/{id}/decisao`
 
 `PATCH` body `{ "decisao": "ACEITA|IGNORADA|ALTERADA", "observacoes": "string?" }` → **200** `{ "id", "decisaoUsuario", "decisaoEm", "observacoes" }` (RN-053).
 
