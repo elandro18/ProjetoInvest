@@ -138,7 +138,7 @@ Faixas de status:
 |---|---|---|---|---|---|
 | `APORTE_VALOR_INVALIDO` | 422 | "Informe um valor de aporte maior que zero." | ≤ 0 | Corrigir | RN-025 |
 | `APORTE_DADOS_INSUFICIENTES` | 409 | "Não há dados suficientes para sugerir uma distribuição." | Catálogo de classes/segmentos vazio | Cadastrar dados | RN-050 |
-| `APORTE_NAO_ENCONTRADO` | 404 | "Sugestão não encontrada." | ID inexistente | — | RN-052 |
+| `APORTE_NAO_ENCONTRADO` | 404 | "Sugestão não encontrada." | ID inexistente **ou de outro usuário** (404 unificado) | — | RN-052 |
 | `APORTE_DECISAO_INVALIDA` | 422 | "Decisão inválida." | Valor fora do enum | Corrigir | RN-053 |
 
 ---

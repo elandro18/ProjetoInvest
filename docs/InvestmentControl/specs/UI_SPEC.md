@@ -272,6 +272,16 @@ Abas: **Visão geral** (dados cadastrais + posição), **Movimentações** (hist
 > A tela nunca exibe "recomendação de compra": o rótulo é "sugestão de distribuição" e "ativos que podem ser estudados".
 > **Escopo por feature:** o simulador (RN-028) e o histórico (RN-052) são features separadas. A decisão aceita observação opcional e fica registrada na sugestão; segmentos sem aporte não são listados.
 
+### 10.1 `/aportes/historico`
+
+| Item | Definição |
+|---|---|
+| Objetivo | Consultar sugestões passadas e as decisões registradas |
+| Lista | Data, valor, decisão e resumo por classe; paginação e filtros de período e decisão |
+| Detalhe | Distribuição, ativos avaliados, checklist, justificativas, alertas, decisão e observação |
+| Regra | Somente leitura; cada usuário vê apenas o próprio histórico |
+| RNs | RN-052, RN-053 |
+
 ---
 
 ## 11. `/pesquisa` e `/pesquisa/[ticker]`

@@ -7,6 +7,8 @@
  * são strings decimais com a escala do contrato (`"1000.00"`, `"40.041000"`).
  */
 
+import { Decimal } from "../../lib/decimal";
+
 export const DECISOES_USUARIO = ["ACEITA", "IGNORADA", "ALTERADA"] as const;
 
 export type DecisaoUsuario = (typeof DECISOES_USUARIO)[number];
@@ -72,6 +74,33 @@ export interface LinhaDistribuicaoSugerida {
 export interface DistribuicaoSugerida {
   readonly classe: readonly LinhaDistribuicaoSugerida[];
   readonly segmento: readonly LinhaDistribuicaoSugerida[];
+}
+
+/** Linha da classe no resumo da lista do histórico (RN-052). */
+export interface LinhaResumoDistribuicao {
+  readonly codigo: string;
+  /** Valor com 2 casas. */
+  readonly valor: string;
+}
+
+export interface ResumoDistribuicaoSugerida {
+  readonly classe: readonly LinhaResumoDistribuicao[];
+}
+
+/**
+ * Recorte da distribuição sugerida exibido na lista do histórico (RN-052,
+ * decisão 5 da análise técnica): apenas as classes que receberam valor, sem
+ * justificativa e sem o recorte por segmento. O snapshot completo fica no
+ * detalhe — a lista não pode crescer com o tamanho de `ativos_avaliados`.
+ */
+export function resumirDistribuicaoSugerida(
+  distribuicao: DistribuicaoSugerida,
+): ResumoDistribuicaoSugerida {
+  return {
+    classe: distribuicao.classe
+      .filter((linha) => Decimal.from(linha.valor).gt("0"))
+      .map((linha) => ({ codigo: linha.codigo, valor: linha.valor })),
+  };
 }
 
 /** Snapshot completo da sugestão (RN-052). */

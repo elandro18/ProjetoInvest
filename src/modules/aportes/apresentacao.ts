@@ -1,7 +1,10 @@
+import type { ResumoSugestaoAporte } from "./repositorio";
 import type {
   AtivoAvaliado,
+  DecisaoUsuario,
   DistribuicaoAtual,
   DistribuicaoSugerida,
+  ResumoDistribuicaoSugerida,
   SugestaoAporteRegistro,
 } from "./tipos";
 
@@ -44,6 +47,23 @@ export interface DecisaoAporteApi {
   readonly observacoes: string | null;
 }
 
+/** Item da lista do histórico (API_CONTRACTS.md §8.3). */
+export interface SugestaoHistoricoItemApi {
+  readonly id: string;
+  readonly data: string;
+  readonly valorDisponivel: string;
+  readonly decisaoUsuario: DecisaoUsuario | null;
+  readonly decisaoEm: string | null;
+  readonly resumo: ResumoDistribuicaoSugerida;
+}
+
+/** Detalhe de uma sugestão: snapshot inteiro + decisão (API_CONTRACTS.md §8.4). */
+export interface SugestaoDetalheApi extends SugestaoAporteApi {
+  readonly decisaoUsuario: DecisaoUsuario | null;
+  readonly decisaoEm: string | null;
+  readonly observacoes: string | null;
+}
+
 export function apresentarSugestao(registro: SugestaoAporteRegistro): SugestaoAporteApi {
   return {
     id: registro.id,
@@ -60,6 +80,30 @@ export function apresentarSugestao(registro: SugestaoAporteRegistro): SugestaoAp
 export function apresentarDecisao(registro: SugestaoAporteRegistro): DecisaoAporteApi {
   return {
     id: registro.id,
+    decisaoUsuario: registro.decisaoUsuario,
+    decisaoEm: registro.decisaoEm === null ? null : registro.decisaoEm.toISOString(),
+    observacoes: registro.observacoesDecisao,
+  };
+}
+
+/** Linha da lista do histórico — resumo sem o snapshot (RN-052). */
+export function apresentarResumoHistorico(item: ResumoSugestaoAporte): SugestaoHistoricoItemApi {
+  return {
+    id: item.id,
+    data: item.data.toISOString(),
+    valorDisponivel: item.valorDisponivel,
+    decisaoUsuario: item.decisaoUsuario,
+    decisaoEm: item.decisaoEm === null ? null : item.decisaoEm.toISOString(),
+    resumo: item.resumo,
+  };
+}
+
+/** Detalhe: o snapshot da criação (RN-025) com a decisão e a observação (RN-053). */
+export function apresentarDetalheSugestao(
+  registro: SugestaoAporteRegistro,
+): SugestaoDetalheApi {
+  return {
+    ...apresentarSugestao(registro),
     decisaoUsuario: registro.decisaoUsuario,
     decisaoEm: registro.decisaoEm === null ? null : registro.decisaoEm.toISOString(),
     observacoes: registro.observacoesDecisao,

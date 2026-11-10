@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { isoParaData } from "../../lib/datas";
 import { AppError } from "../../lib/errors";
 import { isErr, isOk } from "../../lib/result";
 import type { AlocacaoMetaRepositorio, MetaRegistro, NovaMeta, ReferenciasAlocacao } from "../alocacao/repositorio";
@@ -9,14 +10,27 @@ import type {
   LimiteRegistro,
   NovoLimite,
 } from "../risco/repositorio";
-import { apresentarDecisao, apresentarSugestao } from "./apresentacao";
+import {
+  apresentarDecisao,
+  apresentarDetalheSugestao,
+  apresentarResumoHistorico,
+  apresentarSugestao,
+} from "./apresentacao";
 import { criarSugestaoAporte } from "./criar-sugestao";
+import { listarHistorico } from "./listar-historico";
+import { obterSugestaoAporte } from "./obter-sugestao";
 import { registrarDecisaoAporte } from "./registrar-decisao";
-import type { AporteRepositorio, CandidatoAporte } from "./repositorio";
 import type {
-  DecisaoUsuario,
-  NovaSugestaoAporte,
-  SugestaoAporteRegistro,
+  AporteRepositorio,
+  CandidatoAporte,
+  FiltroHistoricoAportes,
+  PaginaSugestoesAporte,
+} from "./repositorio";
+import {
+  resumirDistribuicaoSugerida,
+  type DecisaoUsuario,
+  type NovaSugestaoAporte,
+  type SugestaoAporteRegistro,
 } from "./tipos";
 
 /**
@@ -207,6 +221,23 @@ type RegistroInterno = {
   -readonly [K in keyof SugestaoAporteRegistro]: SugestaoAporteRegistro[K];
 };
 
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/**
+ * Recorte de período do fake, igual ao do adapter Prisma: `de` inclui a
+ * meia-noite do dia e `ate` fecha no início do dia seguinte.
+ */
+function entreDias(data: Date, de?: string, ate?: string): boolean {
+  const ms = data.getTime();
+  if (de !== undefined && ms < isoParaData(de).getTime()) {
+    return false;
+  }
+  if (ate !== undefined && ms >= isoParaData(ate).getTime() + MS_POR_DIA) {
+    return false;
+  }
+  return true;
+}
+
 class AporteRepositorioFake implements AporteRepositorio {
   readonly registros: RegistroInterno[] = [];
   private readonly candidatos = new Map<string, readonly CandidatoAporte[]>();
@@ -246,6 +277,28 @@ class AporteRepositorioFake implements AporteRepositorio {
         (registro) => registro.id === sugestaoId && registro.usuarioId === usuarioId,
       ) ?? null
     );
+  }
+
+  async listarHistorico(filtro: FiltroHistoricoAportes): Promise<PaginaSugestoesAporte> {
+    const doTitular = this.registros
+      .filter((registro) => registro.usuarioId === filtro.usuarioId)
+      .filter(
+        (registro) => filtro.decisao === undefined || registro.decisaoUsuario === filtro.decisao,
+      )
+      .filter((registro) => entreDias(registro.data, filtro.de, filtro.ate))
+      .sort((a, b) => b.data.getTime() - a.data.getTime() || a.id.localeCompare(b.id));
+
+    const inicio = (filtro.page - 1) * filtro.pageSize;
+    const itens = doTitular.slice(inicio, inicio + filtro.pageSize).map((registro) => ({
+      id: registro.id,
+      data: registro.data,
+      valorDisponivel: registro.valorDisponivel,
+      resumo: resumirDistribuicaoSugerida(registro.distribuicaoSugerida),
+      decisaoUsuario: registro.decisaoUsuario,
+      decisaoEm: registro.decisaoEm,
+    }));
+
+    return { itens, total: doTitular.length };
   }
 
   async atualizarDecisao(
@@ -730,5 +783,304 @@ describe("apresentacao", () => {
     expect(api.data).toBe(AGORA.toISOString());
     expect(api.valorDisponivel).toBe("1000.00");
     expect(api.ativosAvaliados).toBe(decidida.value.ativosAvaliados);
+  });
+});
+
+describe("histórico de sugestões (RN-052)", () => {
+  /**
+   * Três sugestões de A em dias distintos (08, 09 e 10/11); as duas mais
+   * recentes recebem decisão. Devolve os registros na ordem de criação.
+   */
+  async function semearHistorico(c: Cenario): Promise<SugestaoAporteRegistro[]> {
+    c.carteira.definir(USUARIO_A, CARTEIRA_RF_ABAIXO);
+
+    const criadas: SugestaoAporteRegistro[] = [];
+    for (const data of ["2026-11-08", "2026-11-09", "2026-11-10"]) {
+      const resultado = await criarSugestaoAporte(
+        { usuarioId: USUARIO_A, valorDisponivel: "1000.00", data },
+        deps(c),
+      );
+      if (!resultado.ok) {
+        throw new Error("não foi possível semear o histórico de teste");
+      }
+      criadas.push(resultado.value);
+    }
+
+    await registrarDecisaoAporte(
+      { usuarioId: USUARIO_A, sugestaoId: criadas[1]!.id, decisao: "ACEITA" },
+      { repositorio: c.repositorio, agora: AGORA_DECISAO },
+    );
+    await registrarDecisaoAporte(
+      {
+        usuarioId: USUARIO_A,
+        sugestaoId: criadas[2]!.id,
+        decisao: "IGNORADA",
+        observacoes: "não aporto agora",
+      },
+      { repositorio: c.repositorio, agora: AGORA_DECISAO },
+    );
+
+    return criadas;
+  }
+
+  it("lista em ordem de data desc com decisão e resumo por classe", async () => {
+    const c = cenario();
+    const criadas = await semearHistorico(c);
+
+    const resultado = await listarHistorico(
+      { usuarioId: USUARIO_A },
+      { repositorio: c.repositorio },
+    );
+
+    expect(isOk(resultado)).toBe(true);
+    if (!resultado.ok) {
+      return;
+    }
+
+    expect(resultado.value.itens.map((item) => item.id)).toEqual([
+      criadas[2]!.id,
+      criadas[1]!.id,
+      criadas[0]!.id,
+    ]);
+    expect(resultado.value.itens.map((item) => item.data.toISOString())).toEqual([
+      "2026-11-10T00:00:00.000Z",
+      "2026-11-09T00:00:00.000Z",
+      "2026-11-08T00:00:00.000Z",
+    ]);
+    expect(resultado.value.itens.map((item) => item.decisaoUsuario)).toEqual([
+      "IGNORADA",
+      "ACEITA",
+      null,
+    ]);
+    expect(resultado.value.itens.every((item) => item.valorDisponivel === "1000.00")).toBe(true);
+    expect(resultado.value.meta).toEqual({ page: 1, pageSize: 20, total: 3, totalPages: 1 });
+
+    const item = apresentarResumoHistorico(resultado.value.itens[0]!);
+    expect(item.resumo.classe).toEqual([{ codigo: "RENDA_FIXA", valor: "1000.00" }]);
+    expect(item.decisaoEm).toBe(AGORA_DECISAO.toISOString());
+
+    // Item ainda sem decisão: decisão e data nulas na lista.
+    const semDecisao = apresentarResumoHistorico(resultado.value.itens[2]!);
+    expect(semDecisao.decisaoUsuario).toBeNull();
+    expect(semDecisao.decisaoEm).toBeNull();
+
+    // Payload pequeno: o snapshot (checklist, justificativas, ativos) fica no detalhe.
+    expect(Object.keys(item).sort()).toEqual([
+      "data",
+      "decisaoEm",
+      "decisaoUsuario",
+      "id",
+      "resumo",
+      "valorDisponivel",
+    ]);
+    const json = JSON.stringify(item);
+    expect(json).not.toContain("checklist");
+    expect(json).not.toContain("justificativa");
+    expect(json).not.toContain("ativosAvaliados");
+  });
+
+  it("filtra por decisão e por período, mantendo o total da meta", async () => {
+    const c = cenario();
+    await semearHistorico(c);
+
+    const ignoradas = await listarHistorico(
+      { usuarioId: USUARIO_A, decisao: "IGNORADA" },
+      { repositorio: c.repositorio },
+    );
+    expect(isOk(ignoradas)).toBe(true);
+    if (ignoradas.ok) {
+      expect(ignoradas.value.itens).toHaveLength(1);
+      expect(ignoradas.value.itens[0]?.decisaoUsuario).toBe("IGNORADA");
+      expect(ignoradas.value.meta.total).toBe(1);
+    }
+
+    const umDia = await listarHistorico(
+      { usuarioId: USUARIO_A, de: "2026-11-09", ate: "2026-11-09" },
+      { repositorio: c.repositorio },
+    );
+    expect(isOk(umDia)).toBe(true);
+    if (umDia.ok) {
+      expect(umDia.value.itens.map((item) => item.data.toISOString())).toEqual([
+        "2026-11-09T00:00:00.000Z",
+      ]);
+      expect(umDia.value.meta).toEqual({ page: 1, pageSize: 20, total: 1, totalPages: 1 });
+    }
+
+    const aPartirDe = await listarHistorico(
+      { usuarioId: USUARIO_A, de: "2026-11-09" },
+      { repositorio: c.repositorio },
+    );
+    expect(aPartirDe.ok && aPartirDe.value.meta.total).toBe(2);
+
+    const ate = await listarHistorico(
+      { usuarioId: USUARIO_A, ate: "2026-11-09" },
+      { repositorio: c.repositorio },
+    );
+    expect(ate.ok && ate.value.meta.total).toBe(2);
+  });
+
+  it("pagina com pageSize e devolve meta consistente", async () => {
+    const c = cenario();
+    const criadas = await semearHistorico(c);
+
+    const primeira = await listarHistorico(
+      { usuarioId: USUARIO_A, page: 1, pageSize: 2 },
+      { repositorio: c.repositorio },
+    );
+    expect(isOk(primeira)).toBe(true);
+    if (!primeira.ok) {
+      return;
+    }
+    expect(primeira.value.itens.map((item) => item.id)).toEqual([
+      criadas[2]!.id,
+      criadas[1]!.id,
+    ]);
+    expect(primeira.value.meta).toEqual({ page: 1, pageSize: 2, total: 3, totalPages: 2 });
+
+    const segunda = await listarHistorico(
+      { usuarioId: USUARIO_A, page: 2, pageSize: 2 },
+      { repositorio: c.repositorio },
+    );
+    expect(isOk(segunda)).toBe(true);
+    if (segunda.ok) {
+      expect(segunda.value.itens.map((item) => item.id)).toEqual([criadas[0]!.id]);
+      expect(segunda.value.meta).toEqual({ page: 2, pageSize: 2, total: 3, totalPages: 2 });
+    }
+  });
+
+  it("rejeita período inválido com VALIDACAO 422 antes de consultar", async () => {
+    const c = cenario();
+
+    const resultado = await listarHistorico(
+      { usuarioId: USUARIO_A, de: "2026-02-30" },
+      { repositorio: c.repositorio },
+    );
+
+    expect(isErr(resultado)).toBe(true);
+    if (!resultado.ok) {
+      expect(resultado.error).toBeInstanceOf(AppError);
+      expect(resultado.error.code).toBe("VALIDACAO");
+      expect(resultado.error.status).toBe(422);
+      expect(resultado.error.details?.errors).toEqual([
+        { field: "de", message: "Data inválida (use YYYY-MM-DD)." },
+      ]);
+    }
+
+    const ateInvalido = await listarHistorico(
+      { usuarioId: USUARIO_A, ate: "10/11/2026" },
+      { repositorio: c.repositorio },
+    );
+    expect(isErr(ateInvalido)).toBe(true);
+    if (!ateInvalido.ok) {
+      expect(ateInvalido.error.code).toBe("VALIDACAO");
+      expect(ateInvalido.error.details?.errors).toEqual([
+        { field: "ate", message: "Data inválida (use YYYY-MM-DD)." },
+      ]);
+    }
+
+    const ambos = await listarHistorico(
+      { usuarioId: USUARIO_A, de: "2026-13-01", ate: "ontem" },
+      { repositorio: c.repositorio },
+    );
+    expect(isErr(ambos)).toBe(true);
+    if (!ambos.ok) {
+      expect(ambos.error.details?.errors).toEqual([
+        { field: "de", message: "Data inválida (use YYYY-MM-DD)." },
+        { field: "ate", message: "Data inválida (use YYYY-MM-DD)." },
+      ]);
+    }
+  });
+
+  it("isola o histórico por titular da sessão", async () => {
+    const c = cenario();
+    await semearHistorico(c);
+
+    const deB = await listarHistorico(
+      { usuarioId: USUARIO_B },
+      { repositorio: c.repositorio },
+    );
+
+    expect(isOk(deB)).toBe(true);
+    if (deB.ok) {
+      expect(deB.value.itens).toEqual([]);
+      expect(deB.value.meta).toEqual({ page: 1, pageSize: 20, total: 0, totalPages: 0 });
+    }
+  });
+
+  it("detalhe devolve o snapshot persistido com a decisão e a observação", async () => {
+    const c = cenario();
+    const criadas = await semearHistorico(c);
+    const alvo = criadas[2]!;
+
+    const resultado = await obterSugestaoAporte(
+      { usuarioId: USUARIO_A, sugestaoId: alvo.id },
+      { repositorio: c.repositorio },
+    );
+
+    expect(isOk(resultado)).toBe(true);
+    if (!resultado.ok) {
+      return;
+    }
+
+    // Snapshot idêntico ao persistido na criação (RN-025).
+    expect(resultado.value.distribuicaoAtual).toEqual(alvo.distribuicaoAtual);
+    expect(resultado.value.distribuicaoSugerida).toEqual(alvo.distribuicaoSugerida);
+    expect(resultado.value.ativosAvaliados).toEqual(alvo.ativosAvaliados);
+    expect(resultado.value.justificativas).toEqual(alvo.justificativas);
+    expect(resultado.value.alertas).toEqual(alvo.alertas);
+
+    const api = apresentarDetalheSugestao(resultado.value);
+    expect(api.data).toBe("2026-11-10T00:00:00.000Z");
+    expect(api.valorDisponivel).toBe("1000.00");
+    expect(api.distribuicaoSugerida).toEqual(alvo.distribuicaoSugerida);
+    expect(api.ativosAvaliados).toBe(alvo.ativosAvaliados);
+    expect(api.decisaoUsuario).toBe("IGNORADA");
+    expect(api.decisaoEm).toBe(AGORA_DECISAO.toISOString());
+    expect(api.observacoes).toBe("não aporto agora");
+  });
+
+  it("detalhe de sugestão ainda sem decisão devolve decisão, data e observação nulas", async () => {
+    const c = cenario();
+    const criadas = await semearHistorico(c);
+
+    const resultado = await obterSugestaoAporte(
+      { usuarioId: USUARIO_A, sugestaoId: criadas[0]!.id },
+      { repositorio: c.repositorio },
+    );
+
+    expect(isOk(resultado)).toBe(true);
+    if (!resultado.ok) {
+      return;
+    }
+
+    const api = apresentarDetalheSugestao(resultado.value);
+    expect(api.decisaoUsuario).toBeNull();
+    expect(api.decisaoEm).toBeNull();
+    expect(api.observacoes).toBeNull();
+    expect(api.distribuicaoSugerida).toEqual(criadas[0]!.distribuicaoSugerida);
+  });
+
+  it("detalhe responde APORTE_NAO_ENCONTRADO para outro titular e para id inexistente", async () => {
+    const c = cenario();
+    const criadas = await semearHistorico(c);
+
+    const deOutroTitular = await obterSugestaoAporte(
+      { usuarioId: USUARIO_B, sugestaoId: criadas[0]!.id },
+      { repositorio: c.repositorio },
+    );
+    expect(isErr(deOutroTitular)).toBe(true);
+    if (!deOutroTitular.ok) {
+      expect(deOutroTitular.error.code).toBe("APORTE_NAO_ENCONTRADO");
+      expect(deOutroTitular.error.status).toBe(404);
+    }
+
+    const inexistente = await obterSugestaoAporte(
+      { usuarioId: USUARIO_A, sugestaoId: "sugestao-inexistente" },
+      { repositorio: c.repositorio },
+    );
+    expect(isErr(inexistente)).toBe(true);
+    if (!inexistente.ok) {
+      expect(inexistente.error.code).toBe("APORTE_NAO_ENCONTRADO");
+    }
   });
 });

@@ -2,6 +2,7 @@ import type { StatusAtivo } from "../ativos/repositorio";
 import type {
   DecisaoUsuario,
   NovaSugestaoAporte,
+  ResumoDistribuicaoSugerida,
   SugestaoAporteRegistro,
 } from "./tipos";
 
@@ -13,6 +14,10 @@ import type {
  * Toda operação recebe `usuarioId` — o isolamento por titular é regra de
  * repositório, nunca do chamador.
  */
+
+/** Paginação do histórico (API_CONTRACTS.md §8.3) — mesmo padrão das demais listas. */
+export const PAGE_SIZE_PADRAO = 20;
+export const PAGE_SIZE_MAXIMO = 100;
 
 /** Ativo cadastrado pelo titular, insumo do checklist (RN-050). */
 export interface CandidatoAporte {
@@ -40,6 +45,12 @@ export interface AporteRepositorio {
   buscarPorId(usuarioId: string, sugestaoId: string): Promise<SugestaoAporteRegistro | null>;
 
   /**
+   * Histórico do titular (RN-052): ordem fixa `data` desc, paginado e já com o
+   * resumo da distribuição sugerida — o snapshot completo fica no detalhe.
+   */
+  listarHistorico(filtro: FiltroHistoricoAportes): Promise<PaginaSugestoesAporte>;
+
+  /**
    * Registra ou sobrescreve a decisão (RN-053). `null` quando a sugestão não
    * existe ou pertence a outro titular.
    */
@@ -50,4 +61,31 @@ export interface AporteRepositorio {
     decisaoEm: Date,
     observacoes: string | null,
   ): Promise<SugestaoAporteRegistro | null>;
+}
+
+/** Filtro da lista do histórico (RN-052; API_CONTRACTS.md §8.3). */
+export interface FiltroHistoricoAportes {
+  readonly usuarioId: string;
+  /** `YYYY-MM-DD`, inclusivo e aplicado sobre o dia inteiro da sugestão. */
+  readonly de?: string;
+  /** `YYYY-MM-DD`, inclusivo. */
+  readonly ate?: string;
+  readonly decisao?: DecisaoUsuario;
+  readonly page: number;
+  readonly pageSize: number;
+}
+
+/** Linha da lista do histórico: sem `ativosAvaliados` nem justificativas. */
+export interface ResumoSugestaoAporte {
+  readonly id: string;
+  readonly data: Date;
+  readonly valorDisponivel: string;
+  readonly resumo: ResumoDistribuicaoSugerida;
+  readonly decisaoUsuario: DecisaoUsuario | null;
+  readonly decisaoEm: Date | null;
+}
+
+export interface PaginaSugestoesAporte {
+  readonly itens: readonly ResumoSugestaoAporte[];
+  readonly total: number;
 }

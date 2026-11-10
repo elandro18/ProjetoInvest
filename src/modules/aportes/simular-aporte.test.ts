@@ -9,7 +9,7 @@ import type {
   ReferenciasAlocacao,
 } from "../alocacao/repositorio";
 import type { ValorCarteira, ValoresCarteira } from "../carteira/valor-carteira";
-import type { AporteRepositorio, CandidatoAporte } from "./repositorio";
+import type { AporteRepositorio, CandidatoAporte, PaginaSugestoesAporte } from "./repositorio";
 import { simularAporte, type SimularAporteDeps } from "./simular-aporte";
 import type { SugestaoAporteRegistro } from "./tipos";
 
@@ -173,6 +173,10 @@ function repositorioEspiao() {
       throw new Error("a simulação não deve persistir sugestão");
     }),
     buscarPorId: vi.fn(async (): Promise<SugestaoAporteRegistro | null> => null),
+    listarHistorico: vi.fn(async (): Promise<PaginaSugestoesAporte> => ({
+      itens: [],
+      total: 0,
+    })),
     atualizarDecisao: vi.fn(async (): Promise<SugestaoAporteRegistro | null> => null),
   } satisfies AporteRepositorio;
 }

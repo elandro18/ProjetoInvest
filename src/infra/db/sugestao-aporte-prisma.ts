@@ -1,16 +1,21 @@
 import { Prisma, type PrismaClient } from "@prisma/client";
 
+import { isoParaData } from "../../lib/datas";
 import type {
   AporteRepositorio,
   CandidatoAporte,
+  FiltroHistoricoAportes,
+  PaginaSugestoesAporte,
+  ResumoSugestaoAporte,
 } from "../../modules/aportes/repositorio";
-import type {
-  AtivoAvaliado,
-  DecisaoUsuario,
-  DistribuicaoAtual,
-  DistribuicaoSugerida,
-  NovaSugestaoAporte,
-  SugestaoAporteRegistro,
+import {
+  resumirDistribuicaoSugerida,
+  type AtivoAvaliado,
+  type DecisaoUsuario,
+  type DistribuicaoAtual,
+  type DistribuicaoSugerida,
+  type NovaSugestaoAporte,
+  type SugestaoAporteRegistro,
 } from "../../modules/aportes/tipos";
 
 /**
@@ -55,6 +60,56 @@ function mapear(row: SugestaoSelecionada): SugestaoAporteRegistro {
     decisaoUsuario: row.decisaoUsuario,
     decisaoEm: row.decisaoEm,
     observacoesDecisao: row.observacoesDecisao,
+  };
+}
+
+/** Lista do histórico: só o necessário para a linha (RN-052, decisão 5). */
+const RESUMO_SELECT = {
+  id: true,
+  data: true,
+  valorDisponivel: true,
+  distribuicaoSugerida: true,
+  decisaoUsuario: true,
+  decisaoEm: true,
+} satisfies Prisma.SugestaoAporteSelect;
+
+type ResumoSelecionado = Prisma.SugestaoAporteGetPayload<{
+  select: typeof RESUMO_SELECT;
+}>;
+
+function mapearResumo(row: ResumoSelecionado): ResumoSugestaoAporte {
+  return {
+    id: row.id,
+    data: row.data,
+    valorDisponivel: row.valorDisponivel.toFixed(2),
+    resumo: resumirDistribuicaoSugerida(
+      row.distribuicaoSugerida as unknown as DistribuicaoSugerida,
+    ),
+    decisaoUsuario: row.decisaoUsuario,
+    decisaoEm: row.decisaoEm,
+  };
+}
+
+const MS_POR_DIA = 24 * 60 * 60 * 1000;
+
+/**
+ * `data` é `timestamptz`: `de` começa na meia-noite UTC do dia e `ate` é
+ * inclusivo, com limite exclusivo no início do dia seguinte.
+ */
+function filtroPeriodo(
+  filtro: FiltroHistoricoAportes,
+): Prisma.SugestaoAporteWhereInput {
+  if (filtro.de === undefined && filtro.ate === undefined) {
+    return {};
+  }
+
+  return {
+    data: {
+      ...(filtro.de === undefined ? {} : { gte: isoParaData(filtro.de) }),
+      ...(filtro.ate === undefined
+        ? {}
+        : { lt: new Date(isoParaData(filtro.ate).getTime() + MS_POR_DIA) }),
+    },
   };
 }
 
@@ -130,6 +185,31 @@ export class SugestaoAportePrismaRepositorio implements AporteRepositorio {
     });
 
     return row === null ? null : mapear(row);
+  }
+
+  async listarHistorico(
+    filtro: FiltroHistoricoAportes,
+  ): Promise<PaginaSugestoesAporte> {
+    const where: Prisma.SugestaoAporteWhereInput = {
+      usuarioId: filtro.usuarioId,
+      ...(filtro.decisao === undefined ? {} : { decisaoUsuario: filtro.decisao }),
+      ...filtroPeriodo(filtro),
+    };
+
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.sugestaoAporte.findMany({
+        where,
+        select: RESUMO_SELECT,
+        // Ordem fixa do histórico (RN-052); `id` desempata e mantém a paginação
+        // estável quando duas sugestões compartilham a mesma `data`.
+        orderBy: [{ data: "desc" }, { id: "asc" }],
+        skip: (filtro.page - 1) * filtro.pageSize,
+        take: filtro.pageSize,
+      }),
+      this.prisma.sugestaoAporte.count({ where }),
+    ]);
+
+    return { itens: rows.map(mapearResumo), total };
   }
 
   async atualizarDecisao(
