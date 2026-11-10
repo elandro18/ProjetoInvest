@@ -299,7 +299,9 @@ async function abrirSugestaoDeMil(page: Page): Promise<SugestaoApi> {
   await page.goto("/aportes");
   await expect(page.getByRole("heading", { name: "Aportes", level: 1 })).toBeVisible();
 
-  await page.getByRole("button", { name: "R$ 1.000" }).click();
+  // `exact` isola o atalho da sugestão do atalho do simulador, cujo nome
+  // acessível ("Simular R$ 1.000") também contém o valor.
+  await page.getByRole("button", { name: "R$ 1.000", exact: true }).click();
   await expect(page.getByLabel("Valor disponível (R$)")).toHaveValue("1.000,00");
 
   const sugestao = await gerarPelaTela(page);

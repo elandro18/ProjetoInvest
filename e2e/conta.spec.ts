@@ -82,10 +82,24 @@ test("logout encerra a sessão e volta para o login", async ({ page }) => {
   // Espera a sessão da tela carregar: sem isso, a resposta de `/api/auth/sessao`
   // pode chegar depois do logout e reemitir o cookie (corrida do teste).
   await expect(page.getByRole("main").getByText(usuario.nome)).toBeVisible();
+  // Os prefetches do header também atravessam o middleware, que devolve
+  // `Set-Cookie` da sessão; uma resposta atrasada poderia recriar o cookie
+  // logo depois do logout (corrida do próprio teste, não da aplicação).
+  // Esperar a rede ficar ociosa elimina essa resposta em voo.
+  await page.waitForLoadState("networkidle");
   await page.getByRole("button", { name: "Sair" }).click();
 
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
+
+  // Confirma o contrato do logout antes de navegar: o cookie de sessão saiu.
+  await expect
+    .poll(async () =>
+      (await page.context().cookies()).some((cookie) =>
+        cookie.name.includes("authjs.session-token"),
+      ),
+    )
+    .toBe(false);
 
   await page.goto("/conta");
   await expect(page).toHaveURL(/\/login\?callbackUrl=(%2F|\/)conta$/);

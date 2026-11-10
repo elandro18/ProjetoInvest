@@ -460,3 +460,35 @@
 ### Removido
 
 - Nada.
+
+## 10/11/2026 — Simulador de aportes implementado (RN-028)
+
+### Implementado (código)
+
+- **RN-028-1** — `POST /api/aportes/simulacao` stateless, reutilizando o motor da RN-025, com `antes`, `depois` e `delta` por classe e segmento.
+- **RN-028-2** — seção **Simulador** em `/aportes` com atalhos, valor personalizado, barras de comparação, delta em p.p. e aviso de que nada é aplicado.
+- **RN-028-3** — 4 cenários E2E, incluindo ausência de persistência e carteira vazia.
+
+### Resultado das verificações
+
+- 902 testes unitários/integração + 66 E2E verdes.
+- Cobertura: 86,83% de linhas global.
+- `lint`, `typecheck`, `build` verdes.
+
+### Decisões
+
+- Simulação é **stateless**: nenhuma `sugestao_aporte` é criada e a carteira não muda.
+- A API devolve todas as linhas (inclusive sem aporte) para o comparativo; a UI mostra "sem alteração".
+- Com carteira e meta na mesma proporção, a distribuição é proporcional (delta zero) — o comportamento é do motor, não do simulador.
+
+### Extra
+
+- O flake pré-existente do E2E de logout foi **endurecido no teste** (`networkidle` + espera do cookie), sem alteração de produção. O sintoma raiz — prefetches do header reemitindo cookie após o logout — fica registrado para avaliação futura do middleware.
+
+### Pendências
+
+- Fase 2 restante: **RN-052** (histórico de sugestões e consulta das decisões).
+
+### Removido
+
+- Nada.

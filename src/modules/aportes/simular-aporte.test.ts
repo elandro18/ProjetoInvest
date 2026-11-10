@@ -271,6 +271,58 @@ describe("simularAporte", () => {
     expect(soma(antes.classe)).toBe("10000.00");
   });
 
+  it("com metas 50/50 e carteira 35/65 aplica todo o aporte em RF: 40,9% (+5,9 p.p.)", async () => {
+    // Cenário do critério de aceitação da RN-028: RF 35% / FII 65%, metas
+    // 50/50 e R$ 1.000,00 hipotéticos. O gap da RF (5.500 − 3.500 = 2.000)
+    // absorve o aporte inteiro; o FII fica com o valor e perde participação.
+    const c = cenario();
+    c.metas.adicionar(USUARIO_A, "CLASSE", "RENDA_FIXA", "50.000000");
+    c.metas.adicionar(USUARIO_A, "CLASSE", "FII", "50.000000");
+    c.metas.adicionar(USUARIO_A, "SEGMENTO", "LOGISTICA", "100.000000");
+    c.carteira.definir(USUARIO_A, {
+      total: "10000.00",
+      classes: [
+        { id: "classe-rf", valor: "3500.00", valorIndisponivel: false },
+        { id: "classe-fii", valor: "6500.00", valorIndisponivel: true },
+      ],
+      segmentos: [{ id: "seg-log", valor: "6500.00", valorIndisponivel: true }],
+    });
+
+    const resultado = await simular(c);
+
+    expect(isOk(resultado)).toBe(true);
+    if (!resultado.ok) {
+      return;
+    }
+
+    const { antes, depois, delta } = resultado.value;
+    expect(antes.patrimonioTotal).toBe("10000.00");
+    expect(depois.patrimonioTotal).toBe("11000.00");
+
+    // Antes 35/65; depois 4.500/11.000 = 40,909091% e 6.500/11.000 = 59,090909%.
+    expect(valorDe(antes.classe, "RENDA_FIXA")).toBe("3500.00");
+    expect(valorDe(antes.classe, "FII")).toBe("6500.00");
+    expect(valorDe(depois.classe, "RENDA_FIXA")).toBe("4500.00");
+    expect(valorDe(depois.classe, "FII")).toBe("6500.00");
+    expect(depois.classe.find((linha) => linha.codigo === "RENDA_FIXA")?.percentual).toBe(
+      "40.909091",
+    );
+    expect(depois.classe.find((linha) => linha.codigo === "FII")?.percentual).toBe("59.090909");
+    expect(delta.classe).toEqual([
+      { codigo: "RENDA_FIXA", pontosPercentuais: "5.909091" },
+      { codigo: "FII", pontosPercentuais: "-5.909091" },
+    ]);
+
+    // Critério de aceitação: soma do depois = patrimônio + aporte.
+    expect(soma(depois.classe)).toBe(
+      Decimal.from(antes.patrimonioTotal).add("1000.00").toFixed(2),
+    );
+
+    // A simulação é somente leitura.
+    expect(c.repositorio.criar).not.toHaveBeenCalled();
+    expect(c.repositorio.listarCandidatos).not.toHaveBeenCalled();
+  });
+
   it("mantém a soma de depois igual ao patrimônio + aporte com arredondamento", async () => {
     const c = cenario();
     c.metas.adicionar(USUARIO_A, "CLASSE", "RENDA_FIXA", "50.000000");
