@@ -11,7 +11,7 @@ status: draft
 > **Escopo:** RN-001 a RN-091 · 91 regras.
 > **Legenda:** ✅ coberto por artefato existente · ⏳ previsto, artefato ainda não gerado · — não se aplica
 
-Situação atual da DAG: `DATA_MODEL.md`, `ARCHITECTURE.md`, `API_CONTRACTS.md`, `ERROR_CATALOG.md`, `UI_SPEC.md`, `SECURITY.md`, `COMPLIANCE.md`, `ACCEPTANCE_CRITERIA.md`, `TEST_STRATEGY.md` e `DEFINITION_OF_DONE.md` gerados. Falta a camada de entrega: features e tasks da Fase 1 (`analysis/` + `delivery/`), que é a fila declarada da próxima etapa.
+Situação atual da DAG: `DATA_MODEL.md`, `ARCHITECTURE.md`, `API_CONTRACTS.md`, `ERROR_CATALOG.md`, `UI_SPEC.md`, `SECURITY.md`, `COMPLIANCE.md`, `ACCEPTANCE_CRITERIA.md`, `TEST_STRATEGY.md` e `DEFINITION_OF_DONE.md` gerados. A camada de entrega existe para as **Fases 1 e 2** (`analysis/` + `delivery/`), com as features implementadas — ver "Estado de implementação" ao fim do documento.
 
 | RN | Tema | DATA_MODEL | API | UI | Situação |
 |---|---|---|---|---|---|
@@ -39,10 +39,10 @@ Situação atual da DAG: `DATA_MODEL.md`, `ARCHITECTURE.md`, `API_CONTRACTS.md`,
 | RN-022 | Meta por segmento = 100% | ✅ `alocacao_meta` | ⏳ `/api/alocacao/metas` | ⏳ `/alocacao` | ✅ |
 | RN-023 | Percentual atual | ✅ derivado de posição | ⏳ `/api/alocacao/desvios` | ⏳ | ✅ |
 | RN-024 | Desvio e valor para meta | ✅ derivado | ⏳ `/api/alocacao/desvios` | ⏳ | ✅ |
-| RN-025 | Aporte mensal | ✅ `sugestao_aporte` | ⏳ `/api/aportes/sugestao` | ⏳ `/aportes` | ✅ |
-| RN-026 | Prioriza classe distante | ✅ `sugestao_aporte` | ⏳ sugestão | ⏳ | ✅ |
-| RN-027 | Conteúdo da sugestão | ✅ JSON de sugestão | ⏳ | ⏳ | ✅ |
-| RN-028 | Simulador de aportes | — (stateless) | ⏳ `/api/aportes/simulacao` | ⏳ | ⏳ |
+| RN-025 | Aporte mensal | ✅ `sugestao_aporte` | ✅ `/api/aportes/sugestao` | ✅ `/aportes` | ✅ |
+| RN-026 | Prioriza classe distante | ✅ `sugestao_aporte` | ✅ motor (water-filling) | ✅ | ✅ |
+| RN-027 | Conteúdo da sugestão | ✅ JSON de sugestão | ✅ | ✅ | ✅ |
+| RN-028 | Simulador de aportes | — (stateless) | ✅ `/api/aportes/simulacao` | ✅ seção Simulador | ✅ |
 | RN-029 | Pesquisa por ticker | ✅ `ativo`, `historico_*` | ⏳ `/api/pesquisa` | ⏳ `/pesquisa` | ✅ |
 | RN-030 | Capacidades do provedor | ✅ `provedor_dados.capacidades` | ⏳ | ⏳ | ✅ |
 | RN-031 | Dados CVM | ✅ `historico_indicador` | ⏳ importação | ⏳ | ✅ |
@@ -63,12 +63,12 @@ Situação atual da DAG: `DATA_MODEL.md`, `ARCHITECTURE.md`, `API_CONTRACTS.md`,
 | RN-046 | Alerta de distribuição | ✅ JSON de sugestão/avaliação | ⏳ | ⏳ | ⏳ |
 | RN-047 | Não repetir último dividendo | — (regra de cálculo) | — | ⏳ projeções | ⏳ |
 | RN-048 | Watchlist | ✅ `watchlist` | ⏳ `/api/watchlist` | ⏳ | ✅ |
-| RN-049 | Concentração | ✅ `limite_concentracao` (extensão) | ⏳ `/api/risco` | ⏳ | ✅ |
-| RN-050 | Checklist antes de sugerir | ✅ `sugestao_aporte` | ⏳ sugestão | ⏳ | ✅ |
-| RN-051 | Classificação do candidato | ✅ `ativos_avaliados` | ⏳ | ⏳ | ✅ |
-| RN-052 | Histórico de sugestões | ✅ `sugestao_aporte` | ⏳ | ⏳ | ✅ |
-| RN-053 | Decisão do usuário | ✅ `decisao_usuario` | ⏳ | ⏳ | ✅ |
-| RN-054 | Rebalancear por aporte | — (regra) | ⏳ | ⏳ | ⏳ |
+| RN-049 | Concentração | ✅ `limite_concentracao` (extensão) | ✅ `/api/risco/concentracao` | ✅ `/configuracoes` | ✅ |
+| RN-050 | Checklist antes de sugerir | ✅ `sugestao_aporte` | ✅ checklist (8 itens) | ✅ | ✅ |
+| RN-051 | Classificação do candidato | ✅ `ativos_avaliados` | ✅ 5 classificações | ✅ `/aportes` | ✅ |
+| RN-052 | Histórico de sugestões | ✅ `sugestao_aporte` | ✅ `/api/aportes/historico` | ✅ `/aportes/historico` | ✅ |
+| RN-053 | Decisão do usuário | ✅ `decisao_usuario` | ✅ `PATCH .../decisao` | ✅ `/aportes` | ✅ |
+| RN-054 | Rebalancear por aporte | — (regra) | ✅ motor | ✅ | ✅ |
 | RN-055 | Não recomendar por P/VP | — (regra) | ⏳ | ⏳ | ⏳ |
 | RN-056 | Não recomendar por DY | — (regra) | ⏳ | ⏳ | ⏳ |
 | RN-057 | Cadastro de renda fixa | ✅ `investimento_renda_fixa` | ⏳ `/api/renda-fixa` | ⏳ | ✅ |
@@ -145,3 +145,17 @@ Situação atual da DAG: `DATA_MODEL.md`, `ARCHITECTURE.md`, `API_CONTRACTS.md`,
 
 > Implementação consolidada na branch `feature/fase-1` (26 commits, 320 arquivos). Não publicada: sem PR, merge ou deploy em 09/11/2026.
 > Pendências de produção em `delivery/HANDOVER_LOG.md` §5.
+
+---
+
+## Estado de implementação — Fase 2 (10/11/2026)
+
+| Feature | Tasks | Situação | Evidência |
+|---|---:|---|---|
+| RN-049 — Controle de concentração | 5 | ✅ | migration `limites_concentracao`, 2 endpoints, tela `/configuracoes`, E2E |
+| RN-025 — Sugestão de aporte | 7 | ✅ | migration `sugestoes_aporte`, motor water-filling, checklist, tela `/aportes`, E2E |
+| RN-028 — Simulador de aportes | 3 | ✅ | `POST /api/aportes/simulacao` stateless, seção Simulador, E2E |
+| RN-052 — Histórico de sugestões | 3 | ✅ | `GET /api/aportes/historico` e `/{id}`, tela `/aportes/historico`, E2E |
+| **Total** | **18** | **18 concluídas** | 925 testes · 69 E2E · cobertura 86,67% |
+
+> Implementação consolidada na branch `feature/rn-052` (mergeada na `main` em 10/11/2026).

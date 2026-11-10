@@ -7,15 +7,15 @@ status: active
 
 # Handover Log — Investment Control
 
-> **Última atualização:** 09/11/2026
-> **Branch:** `feature/fase-1` · **Base:** `main`
-> **Estado:** Fase 1 implementada e consolidada localmente; **não publicada** (sem PR/merge/deploy).
+> **Última atualização:** 10/11/2026
+> **Branch:** `main` · **Base:** `main`
+> **Estado:** Fases 1 e 2 implementadas e consolidadas na `main`.
 
 ---
 
 ## 1. Veredito
 
-**Fase 1 implementada** — controle patrimonial completo (conta, ativos, movimentações, renda fixa, carteira, metas e dashboard), com 763 testes, 52 E2E e cobertura global de 86,17%.
+**Fases 1 e 2 implementadas** — 12 features concluídas (controle patrimonial, metas, dashboard, concentração, sugestão de aporte, simulador e histórico), com 925 testes, 69 E2E e cobertura global de 86,67%.
 
 **Não está pronta para produção** por depender de: deploy (RN-001-5), provedor de e-mail real e páginas legais.
 
@@ -47,7 +47,16 @@ npm run dev
 | RN-020 | Carteira consolidada, evolução e posições | 5 |
 | RN-061 | Dashboard, gráficos e oportunidades | 5 |
 
-Rotas privadas: `/dashboard`, `/carteira`, `/ativos`, `/ativos/novo`, `/ativos/[id]`, `/movimentacoes`, `/renda-fixa`, `/alocacao`, `/conta`. Públicas: `/login`, `/cadastro`, `/verificar-email`, `/esqueci-senha`, `/redefinir-senha`.
+### Fase 2 — Planejamento de aportes
+
+| Feature | Escopo | Tasks |
+|---|---|---|
+| RN-049 | Controle de concentração por ativo, gestora, segmento e emissor | 5 |
+| RN-025 | Sugestão de aporte (water-filling), checklist e decisão | 7 |
+| RN-028 | Simulador de aporte (antes/depois, stateless) | 3 |
+| RN-052 | Histórico de sugestões e detalhe das decisões | 3 |
+
+Rotas privadas: `/dashboard`, `/carteira`, `/ativos`, `/ativos/novo`, `/ativos/[id]`, `/movimentacoes`, `/renda-fixa`, `/alocacao`, `/aportes`, `/aportes/historico`, `/configuracoes`, `/conta`. Públicas: `/login`, `/cadastro`, `/verificar-email`, `/esqueci-senha`, `/redefinir-senha`.
 
 ## 4. Decisões que não devem ser desfeitas sem CR
 
@@ -59,6 +68,11 @@ Rotas privadas: `/dashboard`, `/carteira`, `/ativos`, `/ativos/novo`, `/ativos/[
 - **Metas são por usuário e lazy** (primeiro acesso), com vigência por índices únicos parciais.
 - **Blocos do dashboard degradam isoladamente** e reportam em `erros[]`.
 - **Auditoria de dependências** usa allowlist explícita (`scripts/audit.mjs` + ADR-012).
+- **Limite de concentração não tem default** (`PEND-004`): sem configuração, o percentual é exibido e nenhum alerta é gerado.
+- **Sugestão de aporte usa water-filling por gap sobre o patrimônio pós-aporte**: a classe mais distante recebe primeiro; nunca rateio igualitário.
+- **Checklist trata ausência de dado como `INDISPONIVEL`, nunca como positivo** (RN-077): qualidade e preço só existem nas Fases 3/4.
+- **Simulação de aporte é stateless**: não cria sugestão nem altera a carteira.
+- **Histórico de sugestões é somente leitura**: a sugestão é fato; alteração exigiria CR.
 
 ## 5. Dívidas técnicas e pendências
 
@@ -74,13 +88,14 @@ Rotas privadas: `/dashboard`, `/carteira`, `/ativos`, `/ativos/novo`, `/ativos/[
 | `fonteDados` sem validação contra provedores | integridade do cadastro | API §3.2 |
 | `Idempotency-Key` não exposta no `api-client` | retry idempotente pela UI | `src/lib/api-client.ts` |
 | Filtro de status da carteira limitado a 100 ativos | UX com carteira grande | `carteira-ui.ts` |
+| Middleware reemite `Set-Cookie` em prefetch do header | sessão "ressuscita" após logout (contornado no teste) | `middleware.ts` |
 | `PEND-005`, `PEND-007`, `PEND-008`, `PEND-010`, `PEND-016`, `PEND-017` | decisões de negócio | `REQUIREMENTS.md` §11 |
 
 ## 6. Próximo passo acordado
 
-**Fase 2 — Planejamento de aportes**: sugestão de distribuição (RN-025 a RN-028), concentração (RN-049) e regras de decisão (RN-050 a RN-056). As features serão geradas por `rdd-task-spec` a partir de `REQUIREMENTS.md`.
+**Fase 3 — Pesquisa de FIIs e provedores de dados** (RN-029 a RN-038): destrava cotação, histórico de preços e os itens hoje `INDISPONIVEL` no checklist da sugestão (dados suficientes e preço dentro dos parâmetros).
 
-Antes ou em paralelo: fechar o deploy da Fase 1 e os documentos legais.
+Antes ou em paralelo: fechar o deploy da Fase 1/2 e os documentos legais (`/termos`, `/privacidade`, DPO — `PEND-016`).
 
 ## 7. Guia de leitura
 

@@ -492,3 +492,43 @@
 ### Removido
 
 - Nada.
+
+## 10/11/2026 — Histórico de sugestões implementado (RN-052) — Fase 2 concluída
+
+### Implementado (código)
+
+- **RN-052-1** — `GET /api/aportes/historico` paginado com filtros de período e decisão, e `GET /api/aportes/{id}` com o snapshot completo (somente leitura, 404 unificado).
+- **RN-052-2** — tela `/aportes/historico` com lista, filtros, paginação e detalhe em diálogo; link "Ver histórico" em `/aportes`.
+- **RN-052-3** — 3 cenários E2E, incluindo isolamento A/B e detalhe somente leitura.
+
+### Resultado das verificações
+
+- 925 testes unitários/integração + 69 E2E verdes.
+- Cobertura: 86,67% de linhas global; `src/modules/aportes` 98% linhas.
+- `lint`, `typecheck`, `build` verdes.
+
+### Fase 2 — consolidada
+
+| Feature | Tasks | Situação |
+|---|---|---|
+| RN-049 — Controle de concentração | 5 | ✅ |
+| RN-025 — Sugestão de aporte | 7 | ✅ |
+| RN-028 — Simulador de aportes | 3 | ✅ |
+| RN-052 — Histórico de sugestões | 3 | ✅ |
+| **Total** | **18** | **18 concluídas** |
+
+### Decisões
+
+- Histórico é **somente leitura**: a sugestão é fato; mudança exigiria CR.
+- Lista devolve resumo (classe + valor); o detalhe carrega o snapshot completo.
+- `APORTE_NAO_ENCONTRADO` é 404 unificado para inexistente e para recurso de outro usuário.
+
+### Pendências
+
+- Produção: deploy Vercel/Neon (RN-001-5), provedor de e-mail real e `/termos` + `/privacidade`.
+- O flake do E2E de logout foi endurecido no teste; o middleware que reemite cookie em prefetch fica como dívida técnica.
+- Próxima fase de produto: **Fase 3 — pesquisa de FIIs e provedores** (destrava cotação e histórico de preços).
+
+### Removido
+
+- Nada.
