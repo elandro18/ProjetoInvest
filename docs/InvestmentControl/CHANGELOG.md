@@ -394,3 +394,35 @@
 ### Removido
 
 - Nada.
+
+## 09/11/2026 — Fase 2 iniciada: controle de concentração (RN-049)
+
+### Implementado (código)
+
+- **RN-049-1** — tabela `limite_concentracao` com dimensão, referência, percentual e vigência; índice único parcial garante um limite vigente por referência.
+- **RN-049-2** — `GET/PUT /api/configuracoes/limites` com validação (0 < percentual ≤ 100, duplicidade normalizada) e histórico.
+- **RN-049-3** — `GET /api/risco/concentracao` por ativo, gestora, segmento e emissor, com base no patrimônio total, `excedido` e `excessoPontos`; `IMOVEL` indisponível até a Fase 3/4.
+- **RN-049-4** — tela `/configuracoes` com edição de limites e painel de concentração (badge de excedido).
+- **RN-049-5** — 4 cenários E2E, incluindo isolamento A/B e teardown com a nova FK.
+
+### Resultado das verificações
+
+- 807 testes unitários/integração + 56 E2E verdes.
+- Cobertura: 86,05% de linhas global; `src/modules/risco` 100% linhas.
+- `lint`, `typecheck`, `build` verdes.
+
+### Decisões
+
+- Limites **sem valor default** (`PEND-004`): sem configuração, o percentual é exibido e nenhum alerta é gerado.
+- `referencia: null` é o default da dimensão; limite específico da referência vence o default (comparação sem caixa/espaço).
+- Ativos sem gestor são ignorados na dimensão GESTORA.
+- `IMOVEL` aceita configuração, mas o cálculo permanece indisponível até a Fase 3/4.
+
+### Pendências
+
+- Próximas features da Fase 2: RN-025 (sugestão de aporte), RN-028 (simulador) e RN-052 (histórico).
+- Flake intermitente no E2E de logout (`conta.spec.ts`) sob carga — follow-up para endurecer o teste, sem relação com a concentração.
+
+### Removido
+
+- Nada.

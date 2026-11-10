@@ -8,7 +8,8 @@ import { PrismaClient } from "@prisma/client";
  * por isso estes cenários preparam o estado diretamente no Postgres, sempre
  * com o titular da fixture — nunca dado real. A limpeza respeita a ordem das
  * FKs `ON DELETE RESTRICT` (rendimento → posição desvinculada → movimentação →
- * posição → ativo → renda fixa), a mesma do `globalTeardown`.
+ * posição → ativo → renda fixa → limite de concentração), a mesma do
+ * `globalTeardown`.
  */
 
 const logSilencioso = { info: () => undefined, error: () => undefined };
@@ -42,6 +43,20 @@ export async function limparDadosInvestimento(
   await prisma.investimentoRendaFixa.deleteMany({ where: { usuarioId } });
 }
 
+/**
+ * Remove os limites de concentração do titular (RN-049).
+ *
+ * `limite_concentracao.usuario_id` é `ON DELETE RESTRICT`: sem esta limpeza, o
+ * titular não pode ser apagado. A vigência é versionada, então o `deleteMany`
+ * remove vigentes e histórico de uma vez.
+ */
+export async function limparLimitesConcentracao(
+  prisma: PrismaClient,
+  usuarioId: string,
+): Promise<void> {
+  await prisma.limiteConcentracao.deleteMany({ where: { usuarioId } });
+}
+
 /** Apaga o titular de performance e todo dado de investimento dele. */
 export async function apagarUsuarioDePerformance(
   prisma: PrismaClient,
@@ -49,6 +64,7 @@ export async function apagarUsuarioDePerformance(
 ): Promise<void> {
   await limparDadosInvestimento(prisma, usuarioId);
   await prisma.alocacaoMeta.deleteMany({ where: { usuarioId } });
+  await limparLimitesConcentracao(prisma, usuarioId);
   await prisma.tokenConta.deleteMany({ where: { usuarioId } });
   await prisma.aceiteLegal.deleteMany({ where: { usuarioId } });
   await prisma.usuario.deleteMany({ where: { id: usuarioId } });
