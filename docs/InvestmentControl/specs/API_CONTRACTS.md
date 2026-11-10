@@ -505,23 +505,51 @@ Substitui o conjunto vigente em transação (RN-021, RN-022).
 
 ### 8.1 `POST /api/aportes/sugestao`
 
-**Body:** `{ "valorDisponivel": "1000.00", "data": "2026-11-07" }`
+**Body:** `{ "valorDisponivel": "1000.00", "data": "2026-11-10" }`
 
 **201**
 
 ```json
 {
   "id": "uuid",
+  "data": "2026-11-10T12:00:00Z",
   "valorDisponivel": "1000.00",
-  "distribuicaoAtual": [ { "escopo": "CLASSE", "codigo": "RENDA_FIXA", "percentual": "40.041000" } ],
-  "distribuicaoSugerida": [ { "escopo": "CLASSE", "codigo": "RENDA_FIXA", "valor": "1000.00", "justificativa": "Classe mais distante da meta." } ],
-  "ativosAvaliados": [ { "ticker": "HGLG11", "classificacao": "ABAIXO_META_APTO", "motivos": [], "alertas": [] } ],
-  "alertas": [],
-  "criadoEm": "2026-11-07T18:00:00Z"
+  "distribuicaoAtual": { "classe": [ { "codigo": "RENDA_FIXA", "percentual": "40.041000" } ], "segmento": [] },
+  "distribuicaoSugerida": {
+    "classe": [ { "codigo": "RENDA_FIXA", "valor": "1000.00", "justificativa": "Classe mais distante da meta." } ],
+    "segmento": [ { "codigo": "LOGISTICA", "valor": "250.00", "justificativa": "Segmento abaixo da meta." } ]
+  },
+  "ativosAvaliados": [
+    {
+      "ativoId": "uuid",
+      "ticker": "HGLG11",
+      "nome": "CSHG Logística",
+      "classe": "FII",
+      "segmento": "LOGISTICA",
+      "classificacao": "ABAIXO_META_APTO_PARA_ESTUDO",
+      "checklist": {
+        "classeAbaixoMeta": true,
+        "segmentoAbaixoMeta": true,
+        "ativoJaNaCarteira": false,
+        "aumentaConcentracao": "INDISPONIVEL",
+        "dadosSuficientes": "INDISPONIVEL",
+        "atendeQualidade": "INDISPONIVEL",
+        "alertaRelevante": false,
+        "precoDentroParametros": "INDISPONIVEL"
+      },
+      "motivos": []
+    }
+  ],
+  "justificativas": [],
+  "alertas": []
 }
 ```
 
-**Erros:** `APORTE_VALOR_INVALIDO` (422), `APORTE_SEM_METAS` (409), `APORTE_DADOS_INSUFICIENTES` (409).
+- `classificacao`: `ABAIXO_META_APTO_PARA_ESTUDO`, `ABAIXO_META_COM_RISCOS`, `DENTRO_META`, `ACIMA_META`, `SEM_DADOS_SUFICIENTES`.
+- Itens do checklist usam `SIM`/`NAO`/`INDISPONIVEL`; ausência de dado nunca vira positivo (RN-077).
+- A soma de `distribuicaoSugerida.classe` é exatamente o valor do aporte.
+
+**Erros:** `APORTE_VALOR_INVALIDO` (422), `APORTE_DADOS_INSUFICIENTES` (409).
 
 ### 8.2 `POST /api/aportes/simulacao`
 
@@ -530,7 +558,11 @@ Substitui o conjunto vigente em transação (RN-021, RN-022).
 
 ### 8.3 `GET /api/aportes/historico` e `PATCH /api/aportes/{id}/decisao`
 
-`PATCH` body: `{ "decisao": "ACEITA|IGNORADA|ALTERADA", "observacoes": "string?" }` (RN-052, RN-053).
+`GET /api/aportes/historico?page=&pageSize=` → `{ data: [...], meta }` com data, valor, decisão e resumo da distribuição (RN-052).
+
+`PATCH` body `{ "decisao": "ACEITA|IGNORADA|ALTERADA", "observacoes": "string?" }` → **200** `{ "id", "decisaoUsuario", "decisaoEm" }` (RN-053).
+
+**Erros:** `APORTE_NAO_ENCONTRADO` (404), `APORTE_DECISAO_INVALIDA` (422).
 
 ---
 
