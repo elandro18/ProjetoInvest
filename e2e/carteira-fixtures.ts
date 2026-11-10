@@ -65,6 +65,8 @@ export async function apagarUsuarioDePerformance(
   await limparDadosInvestimento(prisma, usuarioId);
   await prisma.alocacaoMeta.deleteMany({ where: { usuarioId } });
   await limparLimitesConcentracao(prisma, usuarioId);
+  // `sugestao_aporte.usuario_id` é `ON DELETE RESTRICT` (RN-025).
+  await prisma.sugestaoAporte.deleteMany({ where: { usuarioId } });
   await prisma.tokenConta.deleteMany({ where: { usuarioId } });
   await prisma.aceiteLegal.deleteMany({ where: { usuarioId } });
   await prisma.usuario.deleteMany({ where: { id: usuarioId } });

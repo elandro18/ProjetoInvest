@@ -7,13 +7,13 @@ const logSilencioso = { info: () => undefined, error: () => undefined };
 
 /**
  * Limpa o E2E de ativos, renda fixa, movimentações, posições, metas de
- * alocação e limites de concentração (RN-010, RN-014, RN-021, RN-049, RN-057,
- * AC-070).
+ * alocação, limites de concentração e sugestões de aporte (RN-010, RN-014,
+ * RN-021, RN-025, RN-049, RN-057, AC-070).
  *
  * As FKs são `ON DELETE RESTRICT`, então a ordem importa:
  * `rendimento` → `movimentacao` → `posicao_ativo` → `ativo` →
  * `investimento_renda_fixa` → `alocacao_meta` → `limite_concentracao` →
- * `usuario`. Antes de apagar o razão, a referência
+ * `sugestao_aporte` → `usuario`. Antes de apagar o razão, a referência
  * `posicao_ativo.ultima_movimentacao_id` é desvinculada (também RESTRICT); o
  * cache derivado é removido logo depois do razão que ele referencia. Tokens e
  * aceites caem por cascade. Nada é apagado em massa — só os ids registrados na
@@ -52,6 +52,10 @@ export default async function globalTeardown(): Promise<void> {
       // `limite_concentracao.usuario_id` é ON DELETE RESTRICT: sem apagar os
       // limites, a remoção dos titulares abaixo falha.
       const limites = await prisma.limiteConcentracao.deleteMany({ where: dono });
+      // `sugestao_aporte.usuario_id` também é ON DELETE RESTRICT: a decisão é
+      // histórica e a sugestão nunca é apagada pela aplicação, mas o titular de
+      // teste precisa sair no teardown (RN-025).
+      const sugestoes = await prisma.sugestaoAporte.deleteMany({ where: dono });
       const usuarios = await prisma.usuario.deleteMany({ where: { id: { in: ids } } });
 
       const restantes = await Promise.all([
@@ -62,6 +66,7 @@ export default async function globalTeardown(): Promise<void> {
         prisma.investimentoRendaFixa.count(),
         prisma.alocacaoMeta.count(),
         prisma.limiteConcentracao.count(),
+        prisma.sugestaoAporte.count(),
         prisma.usuario.count(),
       ]);
 
@@ -73,6 +78,7 @@ export default async function globalTeardown(): Promise<void> {
         prisma.investimentoRendaFixa.count({ where: dono }),
         prisma.alocacaoMeta.count({ where: dono }),
         prisma.limiteConcentracao.count({ where: dono }),
+        prisma.sugestaoAporte.count({ where: dono }),
         prisma.usuario.count({ where: { id: { in: ids } } }),
       ]);
 
@@ -82,19 +88,21 @@ export default async function globalTeardown(): Promise<void> {
             `movimentações: ${sobraram[1]}, posições: ${sobraram[2]}, ` +
             `ativos: ${sobraram[3]}, renda fixa: ${sobraram[4]}, ` +
             `metas de alocação: ${sobraram[5]}, limites de concentração: ${sobraram[6]}, ` +
-            `usuários: ${sobraram[7]})`,
+            `sugestões de aporte: ${sobraram[7]}, usuários: ${sobraram[8]})`,
         );
       }
 
       process.stdout.write(
         `[e2e] Limpeza: ${rendimentos.count} rendimento(s), ${movimentacoes.count} movimentação(ões), ` +
           `${posicoes.count} posição(ões), ${ativos.count} ativo(s), ${rendaFixa.count} título(s) de renda fixa, ` +
-          `${metas.count} meta(s) de alocação, ${limites.count} limite(s) de concentração e ` +
+          `${metas.count} meta(s) de alocação, ${limites.count} limite(s) de concentração, ` +
+          `${sugestoes.count} sugestão(ões) de aporte e ` +
           `${usuarios.count} usuário(s) de teste removidos; ` +
           `restam ${restantes[0]} rendimento(s), ${restantes[1]} movimentação(ões), ` +
           `${restantes[2]} posição(ões), ${restantes[3]} ativo(s), ` +
           `${restantes[4]} título(s) de renda fixa, ${restantes[5]} meta(s) de alocação, ` +
-          `${restantes[6]} limite(s) de concentração e ${restantes[7]} usuário(s).\n`,
+          `${restantes[6]} limite(s) de concentração, ${restantes[7]} sugestão(ões) de aporte ` +
+          `e ${restantes[8]} usuário(s).\n`,
       );
     } catch (erro) {
       const motivo = erro instanceof Error ? erro.message : String(erro);

@@ -426,3 +426,37 @@
 ### Removido
 
 - Nada.
+
+## 10/11/2026 — Sugestão de aporte implementada (RN-025)
+
+### Implementado (código)
+
+- **RN-025-1** — tabela `sugestao_aporte` com snapshot JSONB, decisão e observação do usuário.
+- **RN-025-2** — motor water-filling por gap sobre o patrimônio pós-aporte; segmentos priorizados por gap; soma exata com resíduo.
+- **RN-025-3** — checklist de oito itens (com `INDISPONIVEL` explícito) e cinco classificações.
+- **RN-025-4** — `POST /api/aportes/sugestao` persistindo snapshot, justificativas e alertas.
+- **RN-025-5** — `PATCH /api/aportes/{id}/decisao` com aceitar/ignorar/alterar e observação.
+- **RN-025-6** — tela `/aportes` com valor, distribuição, ativos para estudar, checklist, justificativas e decisões.
+- **RN-025-7** — 6 cenários E2E, incluindo isolamento A/B e teardown da nova FK.
+
+### Resultado das verificações
+
+- 875 testes unitários/integração + 62 E2E verdes.
+- Cobertura: 86,53% de linhas global; `src/modules/aportes` 97,3% linhas.
+- `lint`, `typecheck`, `build` verdes.
+
+### Decisões
+
+- Gap calculado sobre o **patrimônio pós-aporte**; sem nenhum gap positivo, distribui conforme a meta.
+- "Apto para estudo" não exige qualidade/preço (Fases 3/4): esses itens aparecem como indisponíveis, nunca como positivos.
+- Segmentos sem aporte não são exibidos.
+- Observação da decisão é persistida (`observacoes_decisao`).
+
+### Pendências
+
+- Fase 2 restante: RN-028 (simulador) e RN-052 (histórico e consulta).
+- Flake pré-existente no E2E de logout (`conta.spec.ts`) sob carga.
+
+### Removido
+
+- Nada.
