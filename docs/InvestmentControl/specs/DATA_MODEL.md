@@ -358,6 +358,7 @@ erDiagram
 | `alertas` | jsonb | NOT NULL, default `[]` | Alertas aplicáveis |
 | `decisao_usuario` | `decisao_usuario` | NULL | — |
 | `decisao_em` | timestamptz | NULL | — |
+| `observacoes_decisao` | text | NULL | Observação do usuário ao aceitar, ignorar ou alterar |
 
 **Índices:** `ix_sug_usuario_data` (`usuario_id`, `data` DESC).
 

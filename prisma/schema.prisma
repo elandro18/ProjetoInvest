@@ -129,6 +129,15 @@ enum DimensaoConcentracao {
   @@map("dimensao_concentracao")
 }
 
+/// Decisão do titular sobre uma sugestão de aporte (RN-053, DATA_MODEL.md §4.15).
+enum DecisaoUsuario {
+  ACEITA
+  IGNORADA
+  ALTERADA
+
+  @@map("decisao_usuario")
+}
+
 /// Tipo do fato que altera posição, caixa ou rendimento (RN-014).
 enum TipoMovimentacao {
   COMPRA
@@ -252,6 +261,7 @@ model Usuario {
   rendimentos       Rendimento[]
   metasAlocacao     AlocacaoMeta[]
   limitesConcentracao LimiteConcentracao[]
+  sugestoesAporte   SugestaoAporte[]
 
   @@map("usuario")
 }
@@ -374,6 +384,29 @@ model LimiteConcentracao {
 
   @@index([usuarioId, dimensao], map: "ix_limite_usuario")
   @@map("limite_concentracao")
+}
+
+/// Snapshot imutável da sugestão de aporte (RN-025, RN-052; DATA_MODEL.md
+/// §4.15). Guarda a distribuição atual/sugerida, os ativos avaliados com o
+/// checklist de RN-050 e a decisão do titular (RN-053). O CHECK de valor > 0 é
+/// aplicado na migration (Prisma não o expressa).
+model SugestaoAporte {
+  id                 String          @id @default(uuid()) @db.Uuid
+  usuarioId          String          @map("usuario_id") @db.Uuid
+  data               DateTime        @default(now()) @db.Timestamptz(6)
+  valorDisponivel    Decimal         @map("valor_disponivel") @db.Decimal(18, 2)
+  distribuicaoAtual  Json            @map("distribuicao_atual")
+  distribuicaoSugerida Json          @map("distribuicao_sugerida")
+  ativosAvaliados    Json            @map("ativos_avaliados") @default("[]")
+  justificativas     Json            @default("[]")
+  alertas            Json            @default("[]")
+  decisaoUsuario     DecisaoUsuario? @map("decisao_usuario")
+  decisaoEm          DateTime?       @map("decisao_em") @db.Timestamptz(6)
+  observacoesDecisao String?         @map("observacoes_decisao") @db.Text
+  usuario            Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId, data(sort: Desc)], map: "ix_sug_usuario_data")
+  @@map("sugestao_aporte")
 }
 
 /// Razão de fatos financeiros do titular (RN-014, DATA_MODEL.md §4.5).

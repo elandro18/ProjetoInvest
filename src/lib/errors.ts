@@ -51,6 +51,10 @@ export type AppErrorCode =
   | "ALO_META_DUPLICADA"
   | "ALO_METAS_AUSENTES"
   | "RISCO_LIMITE_INVALIDO"
+  | "APORTE_VALOR_INVALIDO"
+  | "APORTE_DADOS_INSUFICIENTES"
+  | "APORTE_NAO_ENCONTRADO"
+  | "APORTE_DECISAO_INVALIDA"
   | "SEM_PERMISSAO"
   | "RECURSO_NAO_ENCONTRADO"
   | "RATE_LIMIT_EXCEDIDO"
@@ -193,6 +197,16 @@ export const ERROR_CATALOG: Readonly<Record<AppErrorCode, ErrorCatalogEntry>> = 
     status: 422,
     message: "Limite de concentração inválido.",
   },
+  APORTE_VALOR_INVALIDO: {
+    status: 422,
+    message: "Informe um valor de aporte maior que zero.",
+  },
+  APORTE_DADOS_INSUFICIENTES: {
+    status: 409,
+    message: "Não há dados suficientes para sugerir uma distribuição.",
+  },
+  APORTE_NAO_ENCONTRADO: { status: 404, message: "Sugestão não encontrada." },
+  APORTE_DECISAO_INVALIDA: { status: 422, message: "Decisão inválida." },
   SEM_PERMISSAO: { status: 403, message: "Você não tem permissão para esta operação." },
   RECURSO_NAO_ENCONTRADO: { status: 404, message: "Recurso não encontrado." },
   RATE_LIMIT_EXCEDIDO: { status: 429, message: "Muitas tentativas. Aguarde e tente novamente." },
@@ -434,6 +448,22 @@ export const errors = {
 
   riscoLimiteInvalido(details?: AppErrorDetails): AppError {
     return new AppError("RISCO_LIMITE_INVALIDO", { details });
+  },
+
+  aporteValorInvalido(details?: AppErrorDetails): AppError {
+    return new AppError("APORTE_VALOR_INVALIDO", { details });
+  },
+
+  aporteDadosInsuficientes(details?: AppErrorDetails): AppError {
+    return new AppError("APORTE_DADOS_INSUFICIENTES", { details });
+  },
+
+  aporteNaoEncontrado(details?: AppErrorDetails): AppError {
+    return new AppError("APORTE_NAO_ENCONTRADO", { details });
+  },
+
+  aporteDecisaoInvalida(details?: AppErrorDetails): AppError {
+    return new AppError("APORTE_DECISAO_INVALIDA", { details });
   },
 
   semPermissao(details?: AppErrorDetails): AppError {
